@@ -31,3 +31,17 @@ class ActorsState(StatesGroup):
     edit_geo_location = State()
     edit_portfolio = State()
     edit_social = State()
+
+
+class AdminStates(StatesGroup):
+    """Для администраторов"""
+    # Взаимодействие с юзер-ботом
+    start_add_user_bot = State()
+    api_id_input = State()
+    api_hash_input = State()
+    phone_number_input = State()
+    check_data = State()
+    change_api_id = State()
+    change_api_hash = State()
+    change_phone_number = State()
+    code_input = State()

@@ -1,9 +1,16 @@
+import os
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
+from pyrogram import Client
+from pyrogram.filters import incoming
+from pyrogram.types import Message
+from pyrogram.handlers import MessageHandler
+
 from config import BOT_TOKEN, DB_INFO
 from database import BotBase
+# from utils.user_bot_parser import UserBotParser
 
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(
     # parse_mode='MarkdownV2',
@@ -11,6 +18,9 @@ bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(
 
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 base = BotBase(DB_INFO[0], DB_INFO[1], DB_INFO[2], DB_INFO[3])
+
+# Словарь с тех. средствами, например юзер-бот для парсинга каналов/чатов
+techno_dict = dict()
 
 
 async def db_connect():

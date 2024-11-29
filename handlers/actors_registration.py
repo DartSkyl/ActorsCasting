@@ -3,21 +3,25 @@ from aiogram import F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
-from loader import bot, dp, base
+from loader import base
+from utils.users_router import users_router
 from states import ActorsState
 from keyboards.reply import role_choice, skip_button, registry_button, main_menu_actor
 from keyboards.inline_actors import sex_choice, education_choice, experience_choice, role_interested, editor_keyboard
 
 
-@dp.message(Command('start'))
+@users_router.message(Command('start'))
 async def start_func(msg: Message):
     """Запускаем взаимодействие с ботом и даем роль на выбор: актер или кастинг-директор"""
-    await msg.answer('Привет! Я – ваш помощник в мире кино, театра и рекламы. Моя миссия — помогать актёрам находить '
-                     'роли, а кастинг-директорам публиковать кастинги и искать подходящих исполнителей.\nКто вы:',
-                     reply_markup=role_choice)
+    if msg.from_user.id in await base.get_users_id():
+        await msg.answer('Выберете действие:', reply_markup=main_menu_actor)
+    else:
+        await msg.answer('Привет! Я – ваш помощник в мире кино, театра и рекламы. Моя миссия — помогать актёрам '
+                         'находить роли, а кастинг-директорам публиковать кастинги и искать подходящих исполнителей.'
+                         '\nКто вы:', reply_markup=role_choice)
 
 
-@dp.message(F.text == 'Актёр, ищущий кастинги')
+@users_router.message(F.text == 'Актёр, ищущий кастинги')
 async def start_actor_registration(msg: Message, state: FSMContext):
     """Начало регистрации актера"""
     await msg.answer('Для начала мне нужно узнать немного о тебе, после чего я добавлю тебя в нашу актёрскую базу, '
@@ -26,7 +30,7 @@ async def start_actor_registration(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.actor_name)
 
 
-@dp.message(ActorsState.actor_name)
+@users_router.message(ActorsState.actor_name)
 async def name_saver(msg: Message, state: FSMContext):
     """Сохраняем имя и переходим к следующему вопросу"""
     await state.set_data({'actor_name': msg.text})
@@ -34,7 +38,7 @@ async def name_saver(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.sex)
 
 
-@dp.callback_query(ActorsState.sex)
+@users_router.callback_query(ActorsState.sex)
 async def name_saver(callback: CallbackQuery, state: FSMContext):
     """Сохраняем пол и переходим к следующему вопросу"""
     await callback.answer()
@@ -43,7 +47,7 @@ async def name_saver(callback: CallbackQuery, state: FSMContext):
     await state.set_state(ActorsState.passport_age)
 
 
-@dp.message(ActorsState.passport_age)
+@users_router.message(ActorsState.passport_age)
 async def passport_age_saver(msg: Message, state: FSMContext):
     """Сохраняем возраст по паспорту и переходим к следующему вопросу"""
     await state.update_data({'passport_age': msg.text})
@@ -51,11 +55,13 @@ async def passport_age_saver(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.playing_age)
 
 
-@dp.message(ActorsState.playing_age)
+@users_router.message(ActorsState.playing_age)
 async def playing_age_saver(msg: Message, state: FSMContext):
     """Сохраняем игровой возраст и переходим к следующему вопросу"""
     try:
         playing_age = [int(a) for a in msg.text.split('-')]
+        if len(playing_age) != 2:
+            raise ValueError
         await state.update_data({'playing_age': playing_age})
         await msg.answer('Есть ли у вас проф.образование?', reply_markup=education_choice)
         await state.set_state(ActorsState.education)
@@ -63,7 +69,7 @@ async def playing_age_saver(msg: Message, state: FSMContext):
         await msg.answer('Ошибка ввода!\nВведите диапазон, который вы можете играть через дефис')
 
 
-@dp.callback_query(ActorsState.education)
+@users_router.callback_query(ActorsState.education)
 async def education_saver(callback: CallbackQuery, state: FSMContext):
     """Сохраняем образование и переходим к следующему вопросу"""
     await callback.answer()
@@ -72,7 +78,7 @@ async def education_saver(callback: CallbackQuery, state: FSMContext):
     await state.set_state(ActorsState.geo_location)
 
 
-@dp.message(ActorsState.geo_location)
+@users_router.message(ActorsState.geo_location)
 async def geo_location_saver(msg: Message, state: FSMContext):
     """Сохраняем город проживания и переходим к следующему вопросу"""
     await state.update_data({'geo_location': msg.text})
@@ -80,7 +86,7 @@ async def geo_location_saver(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.contacts)
 
 
-@dp.message(ActorsState.contacts)
+@users_router.message(ActorsState.contacts)
 async def contacts_saver(msg: Message, state: FSMContext):
     """Сохраняем контактные данные и переходим к следующему вопросу"""
     await state.update_data({'contacts': msg.text})
@@ -89,7 +95,7 @@ async def contacts_saver(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.agent_contact)
 
 
-@dp.message(ActorsState.agent_contact)
+@users_router.message(ActorsState.agent_contact)
 async def agent_contacts_saver(msg: Message, state: FSMContext):
     """Сохраняем контактные данные агента если есть и переходим к следующему вопросу"""
     await state.update_data({'agent_contact': msg.text if msg.text != 'Пропустить' else 'empty'})
@@ -97,7 +103,7 @@ async def agent_contacts_saver(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.have_experience)
 
 
-@dp.callback_query(ActorsState.have_experience)
+@users_router.callback_query(ActorsState.have_experience)
 async def experience_saver(callback: CallbackQuery, state: FSMContext):
     """Сохраняем опыт и переходим к следующему вопросу"""
     await callback.answer()
@@ -107,7 +113,7 @@ async def experience_saver(callback: CallbackQuery, state: FSMContext):
     await state.set_state(ActorsState.portfolio)
 
 
-@dp.message(ActorsState.portfolio)
+@users_router.message(ActorsState.portfolio)
 async def portfolio_saver(msg: Message, state: FSMContext):
     """Сохраняем портфолио и переходим к следующему вопросу"""
     await state.update_data({'portfolio': msg.text})
@@ -115,7 +121,7 @@ async def portfolio_saver(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.social)
 
 
-@dp.message(ActorsState.social)
+@users_router.message(ActorsState.social)
 async def social_saver(msg: Message, state: FSMContext):
     """Сохраняем соц. сети и переходим к следующему вопросу"""
     await state.update_data({'social': msg.text, 'roles_type_interest': []})  # Пустой список нужен дальше
@@ -149,7 +155,7 @@ dict_for_msg_build = {
     }
 
 
-@dp.callback_query(ActorsState.roles_type_interest, F.data != 'ready')
+@users_router.callback_query(ActorsState.roles_type_interest, F.data != 'ready')
 async def roles_type_saver(callback: CallbackQuery, state: FSMContext):
     """Ловим выбор интересующих ролей"""
     await callback.answer()
@@ -171,7 +177,7 @@ async def roles_type_saver(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(msg_text, reply_markup=role_interested)
 
 
-@dp.callback_query(ActorsState.roles_type_interest, F.data == 'ready')
+@users_router.callback_query(ActorsState.roles_type_interest, F.data == 'ready')
 async def review_all_data(callback: CallbackQuery, state: FSMContext):
     """Выводим все введенные данные и даем возможность исправить"""
     await callback.answer()
@@ -215,7 +221,7 @@ async def review_all_data_after_edit(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.preview)
 
 
-@dp.message(ActorsState.preview, F.text == 'Зарегистрироваться')
+@users_router.message(ActorsState.preview, F.text == 'Зарегистрироваться')
 async def registry_new_actor(msg: Message, state: FSMContext):
     """Регистрируем нового актера"""
     actor_data = await state.get_data()
@@ -236,9 +242,10 @@ async def registry_new_actor(msg: Message, state: FSMContext):
     )
     await msg.answer('Отлично! Вы совершили большой шаг вперед в своей карьере! Поздравляем!',
                      reply_markup=main_menu_actor)
+    await state.clear()
 
 
-@dp.callback_query(ActorsState.preview)
+@users_router.callback_query(ActorsState.preview)
 async def start_edit_data(callback: CallbackQuery, state: FSMContext):
     """Запускаем изменение выбранного параметра"""
     edit_dict = {
@@ -261,7 +268,7 @@ async def start_edit_data(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(text=edit_dict[callback.data][1], reply_markup=edit_dict[callback.data][2])
 
 
-@dp.message(ActorsState.edit_actor_name)
+@users_router.message(ActorsState.edit_actor_name)
 async def edit_actor_name_func(msg: Message, state: FSMContext):
     """Сохраняем изменения ФИО"""
     await state.update_data({'actor_name': msg.text})
@@ -270,7 +277,7 @@ async def edit_actor_name_func(msg: Message, state: FSMContext):
     await review_all_data_after_edit(msg, state)
 
 
-@dp.message(ActorsState.edit_passport_age)
+@users_router.message(ActorsState.edit_passport_age)
 async def edit_passport_age_func(msg: Message, state: FSMContext):
     """Сохраняем изменения Возраст по паспорту"""
     await state.update_data({'passport_age': msg.text})
@@ -279,11 +286,13 @@ async def edit_passport_age_func(msg: Message, state: FSMContext):
     await review_all_data_after_edit(msg, state)
 
 
-@dp.message(ActorsState.edit_playing_age)
+@users_router.message(ActorsState.edit_playing_age)
 async def edit_playing_age_func(msg: Message, state: FSMContext):
     """Сохраняем изменения Игровой возраст"""
     try:
         playing_age = [int(a) for a in msg.text.split('-')]
+        if len(playing_age) != 2:
+            raise ValueError
         await state.update_data({'playing_age': playing_age})
         await msg.answer('Изменения сохранены')
         await state.set_state(ActorsState.preview)
@@ -292,7 +301,7 @@ async def edit_playing_age_func(msg: Message, state: FSMContext):
         await msg.answer('Ошибка ввода!\nВведите диапазон, который вы можете играть через дефис')
 
 
-@dp.message(ActorsState.edit_geo_location)
+@users_router.message(ActorsState.edit_geo_location)
 async def edit_geo_location_func(msg: Message, state: FSMContext):
     """Сохраняем изменения город проживания"""
     await state.update_data({'geo_location': msg.text})
@@ -301,7 +310,7 @@ async def edit_geo_location_func(msg: Message, state: FSMContext):
     await review_all_data_after_edit(msg, state)
 
 
-@dp.message(ActorsState.edit_contacts)
+@users_router.message(ActorsState.edit_contacts)
 async def edit_contacts_func(msg: Message, state: FSMContext):
     """Сохраняем изменения контактные данные"""
     await state.update_data({'contacts': msg.text})
@@ -310,7 +319,7 @@ async def edit_contacts_func(msg: Message, state: FSMContext):
     await review_all_data_after_edit(msg, state)
 
 
-@dp.message(ActorsState.edit_agent_contact)
+@users_router.message(ActorsState.edit_agent_contact)
 async def edit_agent_contact_func(msg: Message, state: FSMContext):
     """Сохраняем изменения Контактные данные агента"""
     await state.update_data({'agent_contact': msg.text})
@@ -319,7 +328,7 @@ async def edit_agent_contact_func(msg: Message, state: FSMContext):
     await review_all_data_after_edit(msg, state)
 
 
-@dp.message(ActorsState.edit_portfolio)
+@users_router.message(ActorsState.edit_portfolio)
 async def edit_portfolio_func(msg: Message, state: FSMContext):
     """Сохраняем изменения портфолио"""
     await state.update_data({'portfolio': msg.text})
@@ -328,7 +337,7 @@ async def edit_portfolio_func(msg: Message, state: FSMContext):
     await review_all_data_after_edit(msg, state)
 
 
-@dp.message(ActorsState.edit_social)
+@users_router.message(ActorsState.edit_social)
 async def edit_social_func(msg: Message, state: FSMContext):
     """Сохраняем изменения соц. сети"""
     await state.update_data({'social': msg.text})
@@ -337,7 +346,7 @@ async def edit_social_func(msg: Message, state: FSMContext):
     await review_all_data_after_edit(msg, state)
 
 
-@dp.callback_query(ActorsState.edit_sex)
+@users_router.callback_query(ActorsState.edit_sex)
 async def edit__func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения пол"""
     await callback.answer()
@@ -347,7 +356,7 @@ async def edit__func(callback: CallbackQuery, state: FSMContext):
     await review_all_data(callback, state)
 
 
-@dp.callback_query(ActorsState.edit_education)
+@users_router.callback_query(ActorsState.edit_education)
 async def edit__func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения образование"""
     await callback.answer()
@@ -357,7 +366,7 @@ async def edit__func(callback: CallbackQuery, state: FSMContext):
     await review_all_data(callback, state)
 
 
-@dp.callback_query(ActorsState.edit_have_experience)
+@users_router.callback_query(ActorsState.edit_have_experience)
 async def edit__func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения опыт"""
     await callback.answer()
@@ -367,7 +376,7 @@ async def edit__func(callback: CallbackQuery, state: FSMContext):
     await review_all_data(callback, state)
 
 
-@dp.callback_query(ActorsState.edit_roles_type_interest)
+@users_router.callback_query(ActorsState.edit_roles_type_interest)
 async def edit__func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения """
     await callback.answer()

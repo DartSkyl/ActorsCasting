@@ -54,3 +54,9 @@ class BotBase:
                                      f"'[{playing_age[0]}, {playing_age[1]}]', '{education}', '{sex}', '{contacts}',"
                                      f"'{agent_contact}', '{have_experience}', '{roles_type_interest}', "
                                      f"'{geo_location}', '{portfolio}', '{social}')")
+
+    async def get_users_id(self):
+        """Достаем все имеющиеся ID что бы посмотреть, зарегистрирован пользователь или нет"""
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch("SELECT user_id FROM public.all_actors")
+            return [i['user_id'] for i in result]  # Так как из БД возвращается объект Record

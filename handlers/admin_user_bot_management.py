@@ -37,7 +37,6 @@ async def parser_start_func(callback: CallbackQuery):
         await callback.message.answer('Ошибка! Юзер-бот не установлен!')
 
 
-
 # ====================
 # Добавление юзер-бота
 # ====================

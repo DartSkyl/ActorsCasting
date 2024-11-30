@@ -21,6 +21,7 @@ base = BotBase(DB_INFO[0], DB_INFO[1], DB_INFO[2], DB_INFO[3])
 
 # Словарь с тех. средствами, например юзер-бот для парсинга каналов/чатов
 techno_dict = dict()
+techno_dict['parser_id'] = 1  # Заглушка
 
 
 async def db_connect():

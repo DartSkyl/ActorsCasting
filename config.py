@@ -8,7 +8,7 @@ else:
     load_dotenv()
 
 BOT_TOKEN = os.getenv('bot_token')
-ADMINS = [int(i) for i in os.getenv('admins_id').split()]
+ADMINS = {int(i) for i in os.getenv('admins_id').split()}
 DB_INFO = (
     os.getenv('db_user'),
     os.getenv('db_pass'),

@@ -20,13 +20,15 @@ experience_choice = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 role_interested = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Кастинги в кино', callback_data='choice_films')],
-    [InlineKeyboardButton(text='Кастинги в рекламу', callback_data='choice_ads')],
-    [InlineKeyboardButton(text='Театральные проекты', callback_data='choice_theater')],
-    [InlineKeyboardButton(text='Главные и второстепенные роли', callback_data='choice_main_role')],
-    [InlineKeyboardButton(text='Эпизоды', callback_data='choice_episode')],
-    [InlineKeyboardButton(text='Групповка/массовка', callback_data='choice_mass')],
-    [InlineKeyboardButton(text='Некоммерческие проекты / фестивальные короткометражные фильмы молодых режиссёров', callback_data='choice_free')],
+    [InlineKeyboardButton(text='Кастинги в кино', callback_data='choice_p_films')],
+    [InlineKeyboardButton(text='Кастинги в сериал', callback_data='choice_p_series')],
+    [InlineKeyboardButton(text='Кастинги в рекламу', callback_data='choice_p_ads')],
+    [InlineKeyboardButton(text='Театральные проекты', callback_data='choice_p_theater')],
+    [InlineKeyboardButton(text='Некоммерческие проекты / фестивальные короткометражные фильмы молодых режиссёров',
+                          callback_data='choice_p_free')],
+    [InlineKeyboardButton(text='Главные и второстепенные роли', callback_data='choice_r_main_role')],
+    [InlineKeyboardButton(text='Эпизоды', callback_data='choice_r_episode')],
+    [InlineKeyboardButton(text='Групповка/массовка', callback_data='choice_r_mass')],
     [InlineKeyboardButton(text='Готово', callback_data='ready')]
 ])
 

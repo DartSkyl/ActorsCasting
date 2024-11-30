@@ -17,34 +17,65 @@ class CastingForActors(BaseModel):
         role_description: str = Field(description='Описание роли того, кого нужно сыграть')
         additional_requirements: str = Field(default='Не указан', description='Референс, описание сцен из фильма')
         fee: str = Field(default='Не указан', description='Гонорар, который актер получит за роль')
-        text_for_testing: str = Field(default='Не указан',
-                                      description='Текст для пробы (сам текст, либо ссылка на него)')
 
     project_name: str = Field(description='Название проекта')
     search_city: str = Field(default='Не указан', description='Город, где проходит кастинг')
-    project_type: str = Field(description='Тип проекта (фильм, сериал, реклама, театр, некоммерческий проект и т.д.)')
+    project_type: str = Field(description='Тип проекта, один из вариантов: полнометражный фильм, сериал, реклама, театр, '
+                                          'некоммерческий проект')
     filming_dates: str = Field(description='Даты съемок')
     filming_location: str = Field(description='Место съемок')
     role_description: List[RoleDescription] = Field(description='описывает саму роль: пол, возраст, тип роли, описание '
                                                                 'роли и т.д.')
-    where_to_send_applications: str = Field(description='Ссылка, контакт или почта куда отправлять заявки и если есть, '
-                                                        'то и тема письма')
-    rules_for_submitting_an_application: str = Field(default='Не указан', description='Вся информация '
-                                                                                      'касающаяся оформления заявки')
 
 
+class ConfigurationParsing(BaseModel):
+    """Класс описания схемы конфигураций для актерских кастингов"""
+    project_type: str = Field(default='Unspecified', description='Тип проекта. Реклама принимает значение "ads"; кино или фильм значение '
+                                          '"films"; сериал значение "series";если театр или постановка значение '
+                                          '"theater"; Некоммерческие проекты / фестивальные короткометражные фильмы'
+                                          ' молодых режиссёров значение "free"')
+    role_type: str = Field(default='Unspecified', description='Тип роли. Главные и второстепенные роли принимают значение "main_role";'
+                                       'эпизодическая роль имеет значение "episode"; групповка и массовка имеют значение'
+                                       '"mass"')
+    actor_sex: str = Field(description='Пол актера или персонажа. Мужской пол значение "male"; женский пол значение '
+                                       '"female"')
+    age_restrictions: str = Field(description='Возрастные ограничения, просто две цифры через дефис(например "30-40")')
+
+
+# Промпт для парсинга информации о кастингах из сообщений
 prompt_text = """Тебе будут скидывать сообщения в которых будет содержаться описание 
 кастингов. Твоя задача достать от туда всю необходимую информацию, как указано в подсказке по форматированию 
 {format_instructions}. Обязательно использовать абсолютно все информацию из сообщения! Сообщение с кастингом: {input}"""
 
-prompt_text_2 = """"""
-
-model = ChatOpenAI(openai_api_key=OPENAI_API_KEY, temperature=0)
 prompt = PromptTemplate.from_template(prompt_text)
 parser = JsonOutputParser(pydantic_object=CastingForActors)
+
+# Промпт для парсинга конфигураций из информации о кастингах
+prompt_text_2 = """Тебе будет поступать информация о кастинга для актеров. Тебе нужно строго структурировать ее в 
+в соответствии с подсказкой по форматированию {format_instructions}. Информация о кастинге: {input}"""
+
+prompt_2 = PromptTemplate.from_template(prompt_text_2)
+parser_2 = JsonOutputParser(pydantic_object=ConfigurationParsing)
+
+model = ChatOpenAI(openai_api_key=OPENAI_API_KEY, temperature=0)
 
 
 async def get_casting_data(casting_msg: str):
     """Цепочка с использованием JsonOutputParser"""
+    # Сначала достаем всю информацию о кастинге из сообщения
     chain = prompt | model | parser
-    return await chain.ainvoke({'input': casting_msg, 'format_instructions': parser.get_format_instructions()})
+    casting_data = await chain.ainvoke({'input': casting_msg, 'format_instructions': parser.get_format_instructions()})
+    casting_config = []
+    # Из получившейся информации нужно сформировать сообщение для формирования конфигураций
+    if len(casting_data['role_description']) > 0:
+        for role in casting_data['role_description']:
+            input_text_for_prompt_2 = f'Тип проекта: {casting_data["project_type"]}\n'
+            input_text_for_prompt_2 += (f'Тип роли: {role["role_type"]}\n'
+                                        f'Пол актера: {role["actor_sex"]}\n'
+                                        f'Возраст актера:{role["age_restrictions"]}')
+            chain_2 = prompt_2 | model | parser_2
+            casting_config.append(await chain_2.ainvoke({'input': input_text_for_prompt_2,
+                                                         'format_instructions': parser_2.get_format_instructions()}))
+        return casting_data, casting_config
+    else:
+        return False

@@ -62,7 +62,7 @@ async def playing_age_saver(msg: Message, state: FSMContext):
         playing_age = [int(a) for a in msg.text.split('-')]
         if len(playing_age) != 2:
             raise ValueError
-        await state.update_data({'playing_age': playing_age})
+        await state.update_data({'playing_age': msg.text})
         await msg.answer('Есть ли у вас проф.образование?', reply_markup=education_choice)
         await state.set_state(ActorsState.education)
     except ValueError:
@@ -124,7 +124,7 @@ async def portfolio_saver(msg: Message, state: FSMContext):
 @users_router.message(ActorsState.social)
 async def social_saver(msg: Message, state: FSMContext):
     """Сохраняем соц. сети и переходим к следующему вопросу"""
-    await state.update_data({'social': msg.text, 'roles_type_interest': []})  # Пустой список нужен дальше
+    await state.update_data({'social': msg.text, 'roles_type_interest': [], 'projects_interest': []})  # Пустой список нужен дальше
     await msg.answer('Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов):',
                      reply_markup=role_interested)
     await state.set_state(ActorsState.roles_type_interest)
@@ -134,6 +134,7 @@ async def social_saver(msg: Message, state: FSMContext):
 dict_for_msg_build = {
         # Роли
         'films': 'Кастинги в кино',
+        'series': 'Кастинг в сериал',
         'ads': 'Кастинги в рекламу',
         'theater': 'Театральные проекты',
         'main_role': 'Главные и второстепенные роли',
@@ -163,17 +164,30 @@ async def roles_type_saver(callback: CallbackQuery, state: FSMContext):
     msg_text = 'Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов)\nУже выбрано:\n\n'
 
     roles_type_interest: list = (await state.get_data())['roles_type_interest']
-    roles_type_choice = callback.data.replace('choice_', '')
+    projects_interest: list = (await state.get_data())['projects_interest']
+    if callback.data.startswith('choice_r'):
+        roles_type_choice = callback.data.replace('choice_r_', '')
 
-    if roles_type_choice not in roles_type_interest:
-        roles_type_interest.append(roles_type_choice)
+        if roles_type_choice not in roles_type_interest:
+            roles_type_interest.append(roles_type_choice)
+        else:
+            roles_type_interest.remove(roles_type_choice)
+
     else:
-        roles_type_interest.remove(roles_type_choice)
+        projects_choice = callback.data.replace('choice_p_', '')
+
+        if projects_choice not in projects_interest:
+            projects_interest.append(projects_choice)
+        else:
+            projects_interest.remove(projects_choice)
 
     for elem in roles_type_interest:
         msg_text += dict_for_msg_build[elem] + '\n'
+    for elem in projects_interest:
+        msg_text += dict_for_msg_build[elem] + '\n'
+
     msg_text += '\nНажмите повторно что бы убрать выбранное\nНажмите "Готово" что бы продолжить'
-    await state.update_data({'roles_type_interest': roles_type_interest})
+    await state.update_data({'roles_type_interest': roles_type_interest, 'projects_interest': projects_interest})
     await callback.message.edit_text(msg_text, reply_markup=role_interested)
 
 
@@ -186,7 +200,7 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
                 f'ФИО: {actor_data["actor_name"]}\n'
                 f'Пол: {dict_for_msg_build[actor_data["sex"]]}\n'
                 f'Возраст по паспорту: {actor_data["passport_age"]}\n'
-                f'Игровой возраст: {"-".join([str(a) for a in actor_data["playing_age"]])}\n'
+                f'Игровой возраст: {actor_data["playing_age"]}\n'
                 f'Образование: {dict_for_msg_build[actor_data["education"]]}\n'
                 f'Город проживания: {actor_data["geo_location"]}\n'
                 f'Контактные данные: {actor_data["contacts"]}\n'
@@ -194,7 +208,8 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
                 f'Опыт: {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'Портфолио: {actor_data["portfolio"]}\n'
                 f'Соц. сети: {actor_data["social"]}\n'
-                f'То, что интересует: {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}')
+                f'То, что интересует: {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}'
+                f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
     await callback.message.answer(msg_text, reply_markup=editor_keyboard)
     await callback.message.answer('Если все верно нажмите "Зарегистрироваться"', reply_markup=registry_button)
     await state.set_state(ActorsState.preview)
@@ -207,7 +222,7 @@ async def review_all_data_after_edit(msg: Message, state: FSMContext):
                 f'ФИО: {actor_data["actor_name"]}\n'
                 f'Пол: {dict_for_msg_build[actor_data["sex"]]}\n'
                 f'Возраст по паспорту: {actor_data["passport_age"]}\n'
-                f'Игровой возраст: {"-".join([str(a) for a in actor_data["playing_age"]])}\n'
+                f'Игровой возраст: {actor_data["playing_age"]}\n'
                 f'Образование: {dict_for_msg_build[actor_data["education"]]}\n'
                 f'Город проживания: {actor_data["geo_location"]}\n'
                 f'Контактные данные: {actor_data["contacts"]}\n'
@@ -215,7 +230,8 @@ async def review_all_data_after_edit(msg: Message, state: FSMContext):
                 f'Опыт: {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'Портфолио: {actor_data["portfolio"]}\n'
                 f'Соц. сети: {actor_data["social"]}\n'
-                f'То, что интересует: {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}')
+                f'То, что интересует: {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}'
+                f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
     await msg.answer(msg_text, reply_markup=editor_keyboard)
     await msg.answer('Если все верно нажмите "Зарегистрироваться"', reply_markup=registry_button)
     await state.set_state(ActorsState.preview)
@@ -238,7 +254,8 @@ async def registry_new_actor(msg: Message, state: FSMContext):
         roles_type_interest='+'.join(actor_data['roles_type_interest']),
         geo_location=actor_data['geo_location'],
         portfolio=actor_data['portfolio'],
-        social=actor_data['social']
+        social=actor_data['social'],
+        projects_interest='+'.join(actor_data['projects_interest'])
     )
     await msg.answer('Отлично! Вы совершили большой шаг вперед в своей карьере! Поздравляем!',
                      reply_markup=main_menu_actor)
@@ -293,7 +310,7 @@ async def edit_playing_age_func(msg: Message, state: FSMContext):
         playing_age = [int(a) for a in msg.text.split('-')]
         if len(playing_age) != 2:
             raise ValueError
-        await state.update_data({'playing_age': playing_age})
+        await state.update_data({'playing_age': msg.text})
         await msg.answer('Изменения сохранены')
         await state.set_state(ActorsState.preview)
         await review_all_data_after_edit(msg, state)
@@ -384,17 +401,30 @@ async def edit__func(callback: CallbackQuery, state: FSMContext):
         msg_text = 'Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов)\nУже выбрано:\n\n'
 
         roles_type_interest: list = (await state.get_data())['roles_type_interest']
-        roles_type_choice = callback.data.replace('choice_', '')
+        projects_interest: list = (await state.get_data())['projects_interest']
+        if callback.data.startswith('choice_r'):
+            roles_type_choice = callback.data.replace('choice_r_', '')
 
-        if roles_type_choice not in roles_type_interest:
-            roles_type_interest.append(roles_type_choice)
+            if roles_type_choice not in roles_type_interest:
+                roles_type_interest.append(roles_type_choice)
+            else:
+                roles_type_interest.remove(roles_type_choice)
+
         else:
-            roles_type_interest.remove(roles_type_choice)
+            projects_choice = callback.data.replace('choice_p_', '')
+
+            if projects_choice not in projects_interest:
+                projects_interest.append(projects_choice)
+            else:
+                projects_interest.remove(projects_choice)
 
         for elem in roles_type_interest:
             msg_text += dict_for_msg_build[elem] + '\n'
+        for elem in projects_interest:
+            msg_text += dict_for_msg_build[elem] + '\n'
+
         msg_text += '\nНажмите повторно что бы убрать выбранное\nНажмите "Готово" что бы продолжить'
-        await state.update_data({'roles_type_interest': roles_type_interest})
+        await state.update_data({'roles_type_interest': roles_type_interest, 'projects_interest': projects_interest})
         await callback.message.edit_text(msg_text, reply_markup=role_interested)
     else:
         await state.set_state(ActorsState.preview)

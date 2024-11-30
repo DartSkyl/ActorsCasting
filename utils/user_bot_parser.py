@@ -1,10 +1,13 @@
 import os
 from pyrogram import Client
+from pyrogram.types import Message
 from pyrogram.errors.exceptions.not_acceptable_406 import ChannelPrivate
 from pyrogram.errors.exceptions.flood_420 import FloodWait
 from pyrogram.errors.exceptions.bad_request_400 import PeerIdInvalid
 
-from loader import techno_dict
+from config import ADMINS
+from loader import techno_dict, bot, base
+from utils.ai_parser import get_casting_data
 
 
 class UserBotParser:
@@ -57,11 +60,65 @@ async def parser_start():
     app = await techno_dict['parser'].create_app()
     # Запускаем парсер
     await techno_dict['parser'].switch_status()
+    techno_dict['parser_id'] = (await app.get_me()).id
+    await bot.send_message(chat_id=techno_dict['parser_id'], text='Hi!')
 
     @app.on_message()
-    async def my_handler(client, message):
-        print(message)
-        # await message.forward("me")
+    async def my_handler(client: Client, message: Message):
+        try:
+            casting_data, casting_config = await get_casting_data(message.text)  # Возвращается кортеж
+            # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
+            all_actors = await base.get_all_actors()
+            print(casting_data)
+            print(casting_config)
+            print()
+            print()
+            for actor in all_actors:
+                print()
+                print(actor)
+                role_index = 0  # Индекс роли, для списка из casting_data
+                for role in casting_config:
+                    role_index += 1
+                    # Сначала проверяем пол актера
+                    if actor['sex'] == role['actor_sex']:
+                        print('Sex true')
+                        # Проверяем, подходит ли проект актеру
+                        if role['project_type'] in actor['projects_interest'].split('+'):
+                            print('Project type true')
+                            # Проверяем, подходит ли тип роли
+                            if role['role_type'] in actor['roles_type_interest'].split('+'):
+                                print('Role type true')
+                                # Проверяем возраст актера
+                                a = [int(i) for i in actor['playing_age'].split('-')]  # Игровой диапазон актера
+                                a.sort()
+                                b = [int(i) for i in
+                                     role['age_restrictions'].split('-')]  # Возрастной диапазон для роли
+                                b.sort()
+                                if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
+                                    # print(actor)
+                                    print(role)
+                                    role_info = casting_data['role_description'][role_index - 1]
+                                    msg_text = (f'Пол актера: {role_info["actor_sex"]}\n'
+                                                f'Возраст актера: {role_info["age_restrictions"]}\n'
+                                                f'Название роли: {role_info["role_name"]}\n'
+                                                f'Тип роли: {role_info["role_type"]}\n'
+                                                f'Описание роли: {role_info["role_description"]}\n'
+                                                f'Дополнительные требования: {role_info["additional_requirements"]}\n'
+                                                f'Гонорар: {role_info["fee"]}\n')
+                                    await bot.send_message(chat_id=actor['user_id'], text=msg_text)
+                                else:
+                                    print(a, b)
+                            else:
+                                print(role['role_type'], actor['roles_type_interest'].split('+'))
+                        else:
+                            print(role['project_type'], actor['projects_interest'].split('+'))
+                    else:
+                        print(actor['sex'], role['actor_sex'])
+
+
+        except TypeError as e:  # Значит не кастинг
+            print(e)
+            pass
 
 
 async def parser_stop():

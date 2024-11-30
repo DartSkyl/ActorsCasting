@@ -32,31 +32,39 @@ class BotBase:
                                      "(user_id BIGINT PRIMARY KEY,"
                                      "actor_name VARCHAR(155),"
                                      "passport_age INT,"
-                                     "playing_age int4range,"
+                                     "playing_age VARCHAR(155),"
                                      "education VARCHAR(155),"
                                      "sex VARCHAR(155),"
                                      "contacts VARCHAR(155),"
                                      "agent_contact VARCHAR(155),"
                                      "have_experience TEXT,"
+                                     "projects_interest TEXT,"
                                      "roles_type_interest TEXT,"
                                      "geo_location TEXT,"
                                      "portfolio TEXT,"
                                      "social TEXT);")
 
     async def registry_new_actor(self, user_id, actor_name, passport_age, playing_age, education, sex, contacts,
-                                 agent_contact, have_experience, roles_type_interest, geo_location, portfolio, social):
+                                 agent_contact, have_experience, roles_type_interest, geo_location, portfolio, social,
+                                 projects_interest):
         """Сохраняем нового актера в БД"""
         async with self.pool.acquire() as connection:
             await connection.execute(f"INSERT INTO public.all_actors"
                                      f"(user_id, actor_name, passport_age, playing_age, education, sex, contacts,"
                                      f"agent_contact, have_experience, roles_type_interest, geo_location, portfolio,"
-                                     f"social) VALUES ({user_id}, '{actor_name}', {passport_age}, "
-                                     f"'[{playing_age[0]}, {playing_age[1]}]', '{education}', '{sex}', '{contacts}',"
+                                     f"social, projects_interest) VALUES ({user_id}, '{actor_name}', {passport_age}, "
+                                     f"'{playing_age}', '{education}', '{sex}', '{contacts}',"
                                      f"'{agent_contact}', '{have_experience}', '{roles_type_interest}', "
-                                     f"'{geo_location}', '{portfolio}', '{social}')")
+                                     f"'{geo_location}', '{portfolio}', '{social}', '{projects_interest}')")
 
     async def get_users_id(self):
         """Достаем все имеющиеся ID что бы посмотреть, зарегистрирован пользователь или нет"""
         async with self.pool.acquire() as connection:
             result = await connection.fetch("SELECT user_id FROM public.all_actors")
             return [i['user_id'] for i in result]  # Так как из БД возвращается объект Record
+
+    async def get_all_actors(self):
+        """Достаем всех актеров"""
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch("SELECT * FROM public.all_actors")
+            return result

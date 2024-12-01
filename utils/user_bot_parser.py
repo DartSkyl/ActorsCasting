@@ -1,13 +1,11 @@
 import os
 from pyrogram import Client
 from pyrogram.types import Message
-from pyrogram.errors.exceptions.not_acceptable_406 import ChannelPrivate
-from pyrogram.errors.exceptions.flood_420 import FloodWait
-from pyrogram.errors.exceptions.bad_request_400 import PeerIdInvalid
+from pyrogram.enums.message_media_type import MessageMediaType
 
-from config import ADMINS
 from loader import techno_dict, bot, base
 from utils.ai_parser import get_casting_data
+from keyboards.inline_actors import button_for_casting
 
 
 class UserBotParser:
@@ -47,6 +45,38 @@ class UserBotParser:
             self.status = True
             await self._client.start()
 
+    async def forward_origin_message(self, user_id, origin_chat, origin_message):
+        """Метод перебрасывает оригинальное сообщение из чата в личку к боту,
+        что бы оттуда перебросить к пользователю"""
+        # Что бы перебросить сообщение от бота к пользователю будем использовать эту причудливую
+        # конструкцию. Сохраним в заранее созданный список словарь, где ключ это ID пользователя,
+        # который запросил оригинал, а значение это информация об источнике и искомом сообщении.
+        # Когда переброшенное сообщение прейдет от парсера к боту, мы достанем информацию из пересланного сообщения и
+        # сравним ее с той что храниться в списке
+        techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(origin_message)})
+        await self._client.forward_messages(
+            chat_id=techno_dict['bot_id'],
+            from_chat_id=origin_chat,
+            message_ids=origin_message
+        )
+
+    async def check_text_for_prob(self, user_id, origin_chat, next_origin_message):
+        """Этим методом проверяем есть ли текст проб в следующем сообщении в виде файла"""
+        try:
+            prob_text = await self._client.get_messages(origin_chat, next_origin_message)
+            if prob_text.media == MessageMediaType.DOCUMENT:
+                techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(next_origin_message)})
+                await self._client.forward_messages(
+                    chat_id=techno_dict['bot_id'],
+                    from_chat_id=origin_chat,
+                    message_ids=next_origin_message
+                )
+                return True
+            return False
+        except Exception as e:
+            print(e)
+            return False
+
 
 async def parser_load():
     if os.path.isfile('CastingParser.session'):
@@ -69,52 +99,71 @@ async def parser_start():
             casting_data, casting_config = await get_casting_data(message.text)  # Возвращается кортеж
             # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
             all_actors = await base.get_all_actors()
-            print(casting_data)
-            print(casting_config)
-            print()
-            print()
+            # print(casting_data)
+            # print(casting_config)
+            # print()
+            # print()
             for actor in all_actors:
-                print()
-                print(actor)
+                # print()
+                # print(actor)
                 role_index = 0  # Индекс роли, для списка из casting_data
+                role_list = []  # Формируем список из подходящих ролей
                 for role in casting_config:
                     role_index += 1
                     # Сначала проверяем пол актера
                     if actor['sex'] == role['actor_sex']:
-                        print('Sex true')
+                        # print('Sex true')
                         # Проверяем, подходит ли проект актеру
-                        if role['project_type'] in actor['projects_interest'].split('+'):
-                            print('Project type true')
+                        if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
+                            # print('Project type true')
                             # Проверяем, подходит ли тип роли
-                            if role['role_type'] in actor['roles_type_interest'].split('+'):
-                                print('Role type true')
+                            if role['role_type'] in actor['roles_type_interest'].split('+') or role['role_type'] == 'Unspecified':
+                                # print('Role type true')
                                 # Проверяем возраст актера
-                                a = [int(i) for i in actor['playing_age'].split('-')]  # Игровой диапазон актера
+                                # Игровой диапазон актера
+                                a = [int(i) for i in actor['playing_age'].split('-')]
                                 a.sort()
-                                b = [int(i) for i in
-                                     role['age_restrictions'].split('-')]  # Возрастной диапазон для роли
+                                # Возрастной диапазон для роли
+                                b = [int(i) for i in role['age_restrictions'].split('-')]
                                 b.sort()
                                 if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
-                                    # print(actor)
-                                    print(role)
-                                    role_info = casting_data['role_description'][role_index - 1]
-                                    msg_text = (f'Пол актера: {role_info["actor_sex"]}\n'
-                                                f'Возраст актера: {role_info["age_restrictions"]}\n'
-                                                f'Название роли: {role_info["role_name"]}\n'
-                                                f'Тип роли: {role_info["role_type"]}\n'
-                                                f'Описание роли: {role_info["role_description"]}\n'
-                                                f'Дополнительные требования: {role_info["additional_requirements"]}\n'
-                                                f'Гонорар: {role_info["fee"]}\n')
-                                    await bot.send_message(chat_id=actor['user_id'], text=msg_text)
-                                else:
-                                    print(a, b)
-                            else:
-                                print(role['role_type'], actor['roles_type_interest'].split('+'))
-                        else:
-                            print(role['project_type'], actor['projects_interest'].split('+'))
-                    else:
-                        print(actor['sex'], role['actor_sex'])
+                                    # print(role)
+                                    role_list.append(casting_data['role_description'][role_index - 1])
 
+                    #             else:
+                    #                 print(a, b)
+                    #         else:
+                    #             print(role['role_type'], actor['roles_type_interest'].split('+'))
+                    #     else:
+                    #         print(role['project_type'], actor['projects_interest'].split('+'))
+                    # else:
+                    #     print(actor['sex'], role['actor_sex'])
+                if len(role_list) > 0:
+                    msg_text = (f'Название проекта: {casting_data["project_name"]}\n'
+                                f'Место проведения кастинга: {casting_data["search_city"]}\n'
+                                f'Тип проекта: {casting_data["project_type"]}\n'
+                                f'Дата съемок: {casting_data["filming_dates"]}\n'
+                                f'Место съемок: {casting_data["filming_location"]}\n\n')
+                    for role_info in role_list:
+                        msg_text += (f'Пол актера: {role_info["actor_sex"]}\n'
+                                     f'Возраст актера: {role_info["age_restrictions"]}\n'
+                                     f'Название роли: {role_info["role_name"]}\n'
+                                     f'Тип роли: {role_info["role_type"]}\n'
+                                     f'Описание роли: {role_info["role_description"]}\n'
+                                     f'Дополнительные требования: {role_info["additional_requirements"]}\n'
+                                     f'Гонорар: {role_info["fee"]}\n\n')
+                    if message.forward_from_chat:
+                        chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
+                    else:
+                        chat_id, message_id = message.chat.id, message.id
+
+                    await bot.send_message(
+                        chat_id=actor['user_id'],
+                        text=msg_text,
+                        reply_markup=await button_for_casting(
+                            chat_id=chat_id,
+                            message_id=message_id)
+                    )
 
         except TypeError as e:  # Значит не кастинг
             print(e)

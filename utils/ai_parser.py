@@ -10,7 +10,7 @@ class CastingForActors(BaseModel):
     """Класс описывает структуру кастингов для актеров"""
     class RoleDescription(BaseModel):
         """Класс описывает саму роль: пол, возраст, тип роли, описание роли и т.д."""
-        actor_sex: str = Field(description='Требуемый пол актера, определи по описываемому персонажу')
+        actor_sex: str = Field(description='Требуемый пол актера, может быть явно не указано, но определить нужно')
         age_restrictions: str = Field(description='Возрастные ограничения')
         role_name: str = Field(description='Название роли или имя персонажа, которого предстоит сыграть')
         role_type: str = Field(description='Тип роли (главная роль, второстепенная роль, массовка и т.д.')
@@ -42,32 +42,51 @@ class ConfigurationParsing(BaseModel):
     age_restrictions: str = Field(description='Возрастные ограничения, просто две цифры через дефис(например "30-40")')
 
 
+class ItCastingOrNot(BaseModel):
+    """Описание ответа о том, кастинг это или нет"""
+    it_casting: bool = Field(description='Если поступившее сообщение содержит информацию о кастинге тогда True, '
+                                         'если нет тогда False')
+
+
 # Промпт для парсинга информации о кастингах из сообщений
 prompt_text = """Тебе будут скидывать сообщения в которых будет содержаться описание 
 кастингов. Твоя задача достать от туда всю необходимую информацию, как указано в подсказке по форматированию 
-{format_instructions}. Обязательно использовать абсолютно все информацию из сообщения! Сообщение с кастингом: {input}"""
-
+{format_instructions}. Обязательно использовать абсолютно все информацию из сообщения! Требуемый пол актера часто явно 
+не указывают, по этому нужно определить по описанию персонажа. Сообщение с кастингом: {input}"""
 prompt = PromptTemplate.from_template(prompt_text)
 parser = JsonOutputParser(pydantic_object=CastingForActors)
 
 # Промпт для парсинга конфигураций из информации о кастингах
 prompt_text_2 = """Тебе будет поступать информация о кастинга для актеров. Тебе нужно строго структурировать ее в 
 в соответствии с подсказкой по форматированию {format_instructions}. Информация о кастинге: {input}"""
-
 prompt_2 = PromptTemplate.from_template(prompt_text_2)
 parser_2 = JsonOutputParser(pydantic_object=ConfigurationParsing)
+
+# Промпт для проверки сообщения на тему кастинга
+check_prompt_text = """Тебе будут приходить сообщения разного содержания. Твоя задача определить содержит ли сообщение 
+информацию о кастинге для актеров или нет. Отвечай как описано в подсказке по форматированию {format_instructions}.
+Текст сообщения: {input}"""
+check_prompt = PromptTemplate.from_template(check_prompt_text)
+check_parser = JsonOutputParser(pydantic_object=ItCastingOrNot)
 
 model = ChatOpenAI(openai_api_key=OPENAI_API_KEY, temperature=0)
 
 
 async def get_casting_data(casting_msg: str):
-    """Цепочка с использованием JsonOutputParser"""
-    # Сначала достаем всю информацию о кастинге из сообщения
-    chain = prompt | model | parser
-    casting_data = await chain.ainvoke({'input': casting_msg, 'format_instructions': parser.get_format_instructions()})
-    casting_config = []
-    # Из получившейся информации нужно сформировать сообщение для формирования конфигураций
-    if len(casting_data['role_description']) > 0:
+    """Первая цепочка проверяет, содержит ли сообщение информацию о кастинге. Если содержит, то вторая достает ее и
+    группирует, а третья формирует конфигурации по этому кастингу"""
+    # Проверяем сообщение на наличие кастинга
+    check_chain = check_prompt | model | check_parser
+    check_response = await check_chain.ainvoke({'input': casting_msg,
+                                                'format_instructions': check_parser.get_format_instructions()})
+    print(check_response)
+    if check_response['it_casting']:
+        # Сначала достаем всю информацию о кастинге из сообщения
+        chain = prompt | model | parser
+        casting_data = await chain.ainvoke({'input': casting_msg, 'format_instructions': parser.get_format_instructions()})
+        casting_config = []
+        # Из получившейся информации нужно сформировать сообщение для формирования конфигураций
+
         for role in casting_data['role_description']:
             input_text_for_prompt_2 = f'Тип проекта: {casting_data["project_type"]}\n'
             input_text_for_prompt_2 += (f'Тип роли: {role["role_type"]}\n'

@@ -10,7 +10,6 @@ from pyrogram.handlers import MessageHandler
 
 from config import BOT_TOKEN, DB_INFO
 from database import BotBase
-# from utils.user_bot_parser import UserBotParser
 
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(
     # parse_mode='MarkdownV2',
@@ -21,10 +20,15 @@ base = BotBase(DB_INFO[0], DB_INFO[1], DB_INFO[2], DB_INFO[3])
 
 # Словарь с тех. средствами, например юзер-бот для парсинга каналов/чатов
 techno_dict = dict()
-techno_dict['parser_id'] = 1  # Заглушка
+techno_dict['forwarding'] = []  # Нужно будет для переброса оригинальных сообщений
 
 
 async def db_connect():
     """В этой функции идет подключение к БД и проверка ее структуры"""
     await base.connect()
     await base.check_db_structure()
+
+
+async def get_bot_id():
+    """Записывает ID бота в techno_dict['bot_id'] для дальнейшего использования"""
+    techno_dict['bot_id'] = (await bot.get_me()).id  # noqa

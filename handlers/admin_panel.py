@@ -10,15 +10,6 @@ from utils.admin_router import admin_router
 from utils.ai_parser import get_casting_data
 
 
-@dp.message(F.forward_origin)
-async def for_forward_message(msg: Message):
-    """Дле перебрасывания сообщений, сам ты извращенец!"""
-    if msg.from_user.id == techno_dict['parser_id']:
-        print(msg.forward_origin)
-        await msg.forward(6724839493)
-        # await bot.forward_message(chat_id=6724839493,)
-
-
 # @admin_router.message()
 async def test_func(msg: Message):
     try:

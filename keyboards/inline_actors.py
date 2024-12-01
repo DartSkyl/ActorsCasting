@@ -47,3 +47,11 @@ editor_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить соц. сети', callback_data='edit_social')],
     [InlineKeyboardButton(text='Изменить то, что интересует', callback_data='edit_roles_type_interest')],
 ])
+
+
+async def button_for_casting(chat_id, message_id):
+    """Клавиатура формирует кнопку для предоставления оригинала сообщения о кастинге"""
+    buttons = [
+        [InlineKeyboardButton(text='Показать оригинал', callback_data=f'origin_{chat_id}_{message_id}')]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)

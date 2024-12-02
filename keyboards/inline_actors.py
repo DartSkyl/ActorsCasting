@@ -32,7 +32,6 @@ role_interested = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Готово', callback_data='ready')]
 ])
 
-
 editor_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_actor_name')],
     [InlineKeyboardButton(text='Изменить пол', callback_data='edit_sex')],
@@ -46,6 +45,19 @@ editor_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить портфолио', callback_data='edit_portfolio')],
     [InlineKeyboardButton(text='Изменить соц. сети', callback_data='edit_social')],
     [InlineKeyboardButton(text='Изменить то, что интересует', callback_data='edit_roles_type_interest')],
+])
+
+setup_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Изменить возраст по паспорту', callback_data='setup_passport_age')],
+    [InlineKeyboardButton(text='Изменить игровой возраст', callback_data='setup_playing_age')],
+    [InlineKeyboardButton(text='Изменить образование', callback_data='setup_education')],
+    [InlineKeyboardButton(text='Изменить город проживания', callback_data='setup_geo_location')],
+    [InlineKeyboardButton(text='Изменить контактные данные', callback_data='setup_contacts')],
+    [InlineKeyboardButton(text='Изменить контактные данные агента', callback_data='setup_agent_contact')],
+    [InlineKeyboardButton(text='Изменить опыт', callback_data='setup_have_experience')],
+    [InlineKeyboardButton(text='Изменить портфолио', callback_data='setup_portfolio')],
+    [InlineKeyboardButton(text='Изменить соц. сети', callback_data='setup_social')],
+    [InlineKeyboardButton(text='Изменить то, что интересует', callback_data='setup_roles_type_interest')],
 ])
 
 

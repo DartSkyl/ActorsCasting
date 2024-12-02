@@ -32,6 +32,19 @@ class ActorsState(StatesGroup):
     edit_portfolio = State()
     edit_social = State()
 
+    setup = State()
+
+    playing_age_setup = State()
+    education_setup = State()
+    contacts_setup = State()
+    agent_contact_setup = State()
+    have_experience_setup = State()
+    roles_type_interest_setup = State()
+    geo_location_setup = State()
+    portfolio_setup = State()
+    social_setup = State()
+    passport_age_setup = State()
+
 
 class AdminStates(StatesGroup):
     """Для администраторов"""

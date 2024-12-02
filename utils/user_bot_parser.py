@@ -1,4 +1,5 @@
 import os
+import json
 from pyrogram import Client
 from pyrogram.types import Message
 from pyrogram.enums.message_media_type import MessageMediaType
@@ -96,29 +97,25 @@ async def parser_start():
     @app.on_message()
     async def my_handler(client: Client, message: Message):
         try:
-            casting_data, casting_config = await get_casting_data(message.text)  # Возвращается кортеж
+            casting_data, casting_config, casting_hash = await get_casting_data(message.text)  # Возвращается кортеж
+            await base.add_new_casting(
+                casting_hash=casting_hash,
+                casting_data=json.dumps(casting_data),
+                casting_config=json.dumps(casting_config)
+            )
             # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
             all_actors = await base.get_all_actors()
-            # print(casting_data)
-            # print(casting_config)
-            # print()
-            # print()
             for actor in all_actors:
-                # print()
-                # print(actor)
                 role_index = 0  # Индекс роли, для списка из casting_data
                 role_list = []  # Формируем список из подходящих ролей
                 for role in casting_config:
                     role_index += 1
                     # Сначала проверяем пол актера
                     if actor['sex'] == role['actor_sex']:
-                        # print('Sex true')
                         # Проверяем, подходит ли проект актеру
                         if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
-                            # print('Project type true')
                             # Проверяем, подходит ли тип роли
                             if role['role_type'] in actor['roles_type_interest'].split('+') or role['role_type'] == 'Unspecified':
-                                # print('Role type true')
                                 # Проверяем возраст актера
                                 # Игровой диапазон актера
                                 a = [int(i) for i in actor['playing_age'].split('-')]
@@ -127,17 +124,8 @@ async def parser_start():
                                 b = [int(i) for i in role['age_restrictions'].split('-')]
                                 b.sort()
                                 if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
-                                    # print(role)
                                     role_list.append(casting_data['role_description'][role_index - 1])
 
-                    #             else:
-                    #                 print(a, b)
-                    #         else:
-                    #             print(role['role_type'], actor['roles_type_interest'].split('+'))
-                    #     else:
-                    #         print(role['project_type'], actor['projects_interest'].split('+'))
-                    # else:
-                    #     print(actor['sex'], role['actor_sex'])
                 if len(role_list) > 0:
                     msg_text = (f'Название проекта: {casting_data["project_name"]}\n'
                                 f'Место проведения кастинга: {casting_data["search_city"]}\n'

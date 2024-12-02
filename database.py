@@ -1,4 +1,5 @@
 import asyncpg as apg
+import datetime
 
 
 class BotBase:
@@ -26,8 +27,8 @@ class BotBase:
         )
 
     async def check_db_structure(self) -> None:
-        # Таблица со всеми пользователями
         async with self.pool.acquire() as connection:
+            # Таблица со всеми пользователями
             await connection.execute("CREATE TABLE IF NOT EXISTS all_actors"
                                      "(user_id BIGINT PRIMARY KEY,"
                                      "actor_name VARCHAR(155),"
@@ -43,6 +44,17 @@ class BotBase:
                                      "geo_location TEXT,"
                                      "portfolio TEXT,"
                                      "social TEXT);")
+
+            # Таблица со всеми кастингами
+            await connection.execute("CREATE TABLE IF NOT EXISTS all_castings"
+                                     "(casting_hash VARCHAR(155) PRIMARY KEY,"
+                                     "time_added DATE,"
+                                     "casting_data JSONB,"
+                                     "casting_config JSONB);")
+
+    # ====================
+    # Операции с пользователями
+    # ====================
 
     async def registry_new_actor(self, user_id, actor_name, passport_age, playing_age, education, sex, contacts,
                                  agent_contact, have_experience, roles_type_interest, geo_location, portfolio, social,
@@ -68,3 +80,27 @@ class BotBase:
         async with self.pool.acquire() as connection:
             result = await connection.fetch("SELECT * FROM public.all_actors")
             return result
+
+    async def get_actor_info(self, user_id):
+        """Достаем конкретного актера"""
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT * FROM public.all_actors WHERE user_id = {user_id}")
+            return result
+
+    async def setup_param(self, set_param, new_param_value, user_id):
+        """Задаем новое значение для параметра"""
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"UPDATE public.all_actors SET {set_param} = '{new_param_value}' "
+                                     f"WHERE user_id = {user_id};")
+
+    # ====================
+    # Операции с кастингами
+    # ====================
+
+    async def add_new_casting(self, casting_hash, casting_data, casting_config):
+        """Метод сохраняет новый кастинг в БД"""
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"INSERT INTO public.all_castings"
+                                     f"(casting_hash, time_added, casting_data, casting_config)"
+                                     f"VALUES ('{casting_hash}', '{datetime.date.today()}', "
+                                     f"'{casting_data}','{casting_config}');")

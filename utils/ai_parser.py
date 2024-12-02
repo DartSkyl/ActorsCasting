@@ -1,3 +1,5 @@
+import hashlib
+
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -72,6 +74,10 @@ check_parser = JsonOutputParser(pydantic_object=ItCastingOrNot)
 model = ChatOpenAI(openai_api_key=OPENAI_API_KEY, temperature=0)
 
 
+# В этом множестве будем хранить хэши отработанных сообщений, так как они могут повторяться
+executed_hash = set()
+
+
 async def get_casting_data(casting_msg: str):
     """Первая цепочка проверяет, содержит ли сообщение информацию о кастинге. Если содержит, то вторая достает ее и
     группирует, а третья формирует конфигурации по этому кастингу"""
@@ -79,22 +85,30 @@ async def get_casting_data(casting_msg: str):
     check_chain = check_prompt | model | check_parser
     check_response = await check_chain.ainvoke({'input': casting_msg,
                                                 'format_instructions': check_parser.get_format_instructions()})
-    print(check_response)
     if check_response['it_casting']:
-        # Сначала достаем всю информацию о кастинге из сообщения
-        chain = prompt | model | parser
-        casting_data = await chain.ainvoke({'input': casting_msg, 'format_instructions': parser.get_format_instructions()})
-        casting_config = []
-        # Из получившейся информации нужно сформировать сообщение для формирования конфигураций
 
-        for role in casting_data['role_description']:
-            input_text_for_prompt_2 = f'Тип проекта: {casting_data["project_type"]}\n'
-            input_text_for_prompt_2 += (f'Тип роли: {role["role_type"]}\n'
-                                        f'Пол актера: {role["actor_sex"]}\n'
-                                        f'Возраст актера:{role["age_restrictions"]}')
-            chain_2 = prompt_2 | model | parser_2
-            casting_config.append(await chain_2.ainvoke({'input': input_text_for_prompt_2,
-                                                         'format_instructions': parser_2.get_format_instructions()}))
-        return casting_data, casting_config
+        # Для учета уникальности кастингов будем использовать хэширование первых ста символов сообщения
+
+        str_for_hashing = casting_msg[:100].encode()
+        casting_hash = hashlib.sha256(str_for_hashing).hexdigest()
+        if casting_hash not in executed_hash:
+            # Сначала достаем всю информацию о кастинге из сообщения
+            chain = prompt | model | parser
+            casting_data = await chain.ainvoke({'input': casting_msg, 'format_instructions': parser.get_format_instructions()})
+            casting_config = []
+            # Из получившейся информации нужно сформировать сообщение для формирования конфигураций
+
+            for role in casting_data['role_description']:
+                input_text_for_prompt_2 = f'Тип проекта: {casting_data["project_type"]}\n'
+                input_text_for_prompt_2 += (f'Тип роли: {role["role_type"]}\n'
+                                            f'Пол актера: {role["actor_sex"]}\n'
+                                            f'Возраст актера:{role["age_restrictions"]}')
+                chain_2 = prompt_2 | model | parser_2
+                casting_config.append(await chain_2.ainvoke({'input': input_text_for_prompt_2,
+                                                             'format_instructions': parser_2.get_format_instructions()}))
+                executed_hash.add(casting_hash)
+            return casting_data, casting_config, casting_hash
+        else:
+            return False
     else:
         return False

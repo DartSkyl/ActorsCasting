@@ -364,7 +364,7 @@ async def edit_social_func(msg: Message, state: FSMContext):
 
 
 @users_router.callback_query(ActorsState.edit_sex)
-async def edit__func(callback: CallbackQuery, state: FSMContext):
+async def edit_sex_func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения пол"""
     await callback.answer()
     await state.update_data({'sex': callback.data.replace('sex_', '')})
@@ -374,7 +374,7 @@ async def edit__func(callback: CallbackQuery, state: FSMContext):
 
 
 @users_router.callback_query(ActorsState.edit_education)
-async def edit__func(callback: CallbackQuery, state: FSMContext):
+async def edit_education_func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения образование"""
     await callback.answer()
     await state.update_data({'education': callback.data.replace('educ_', '')})
@@ -384,7 +384,7 @@ async def edit__func(callback: CallbackQuery, state: FSMContext):
 
 
 @users_router.callback_query(ActorsState.edit_have_experience)
-async def edit__func(callback: CallbackQuery, state: FSMContext):
+async def edit_have_experience_func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения опыт"""
     await callback.answer()
     await state.update_data({'have_experience': callback.data.replace('exp_', '')})
@@ -394,7 +394,7 @@ async def edit__func(callback: CallbackQuery, state: FSMContext):
 
 
 @users_router.callback_query(ActorsState.edit_roles_type_interest)
-async def edit__func(callback: CallbackQuery, state: FSMContext):
+async def edit_roles_type_interest_func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения """
     await callback.answer()
     if callback.data != 'ready':

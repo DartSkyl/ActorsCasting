@@ -54,7 +54,9 @@ class ItCastingOrNot(BaseModel):
 prompt_text = """Тебе будут скидывать сообщения в которых будет содержаться описание 
 кастингов. Твоя задача достать от туда всю необходимую информацию, как указано в подсказке по форматированию 
 {format_instructions}. Обязательно использовать абсолютно все информацию из сообщения! Требуемый пол актера часто явно 
-не указывают, по этому нужно определить по описанию персонажа. Сообщение с кастингом: {input}"""
+не указывают, по этому нужно определить по описанию персонажа. Если указано например "ищем мужчин и женщин в возрасте 
+20-30 лет, то воспринимай это как две отдельные роли: мужчина 20-30 лет и женщина 20-30 лет.
+ Сообщение с кастингом: {input}"""
 prompt = PromptTemplate.from_template(prompt_text)
 parser = JsonOutputParser(pydantic_object=CastingForActors)
 
@@ -107,7 +109,8 @@ async def get_casting_data(casting_msg: str):
                 casting_config.append(await chain_2.ainvoke({'input': input_text_for_prompt_2,
                                                              'format_instructions': parser_2.get_format_instructions()}))
                 executed_hash.add(casting_hash)
-            return casting_data, casting_config, casting_hash
+                # Далее будем использовать обрезанную часть хэша
+            return casting_data, casting_config, casting_hash[:10]
         else:
             return False
     else:

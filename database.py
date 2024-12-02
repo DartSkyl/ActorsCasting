@@ -43,14 +43,16 @@ class BotBase:
                                      "roles_type_interest TEXT,"
                                      "geo_location TEXT,"
                                      "portfolio TEXT,"
-                                     "social TEXT);")
+                                     "social TEXT,"
+                                     "favorites TEXT);")
 
             # Таблица со всеми кастингами
             await connection.execute("CREATE TABLE IF NOT EXISTS all_castings"
                                      "(casting_hash VARCHAR(155) PRIMARY KEY,"
                                      "time_added DATE,"
                                      "casting_data JSONB,"
-                                     "casting_config JSONB);")
+                                     "casting_config JSONB,"
+                                     "casting_origin VARCHAR(155));")
 
     # ====================
     # Операции с пользователями
@@ -93,14 +95,58 @@ class BotBase:
             await connection.execute(f"UPDATE public.all_actors SET {set_param} = '{new_param_value}' "
                                      f"WHERE user_id = {user_id};")
 
+    async def get_actor_favorites(self, user_id):
+        """Достаем из базы избранное актера"""
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT favorites FROM public.all_actors WHERE user_id = {user_id}")
+            return result
+
+    async def set_actor_favorites(self, user_id, new_favorites):
+        """Добавляем обновленные кастинги в избранном"""
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"UPDATE public.all_actors SET favorites = '{new_favorites}' "
+                                     f"WHERE user_id = {user_id};")
+
     # ====================
     # Операции с кастингами
     # ====================
 
-    async def add_new_casting(self, casting_hash, casting_data, casting_config):
+    async def add_new_casting(self, casting_hash, casting_data, casting_config, casting_origin):
         """Метод сохраняет новый кастинг в БД"""
         async with self.pool.acquire() as connection:
             await connection.execute(f"INSERT INTO public.all_castings"
-                                     f"(casting_hash, time_added, casting_data, casting_config)"
+                                     f"(casting_hash, time_added, casting_data, casting_config, casting_origin)"
                                      f"VALUES ('{casting_hash}', '{datetime.date.today()}', "
-                                     f"'{casting_data}','{casting_config}');")
+                                     f"'{casting_data}','{casting_config}', '{casting_origin}');")
+
+    async def get_casting(self, casting_hash):
+        """Достаем кастинг из базы"""
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT * "
+                                            f"FROM public.all_castings WHERE casting_hash = '{casting_hash}'")
+            return result
+
+    async def get_statistic_data(self, first_date: str, second_date: str):
+        """Метод возвращает выборку по заданным датам"""
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT * FROM public.all_castings WHERE time_added "
+                                            f"BETWEEN '{first_date}' AND '{second_date}'")
+            return result
+
+    async def get_statistic_for_all_period(self):
+        """Метод возвращает статистику канала за весь период"""
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT * FROM public.all_castings")
+            return result
+
+    async def get_today_statistic(self, date_today: str):
+        """Метод возвращает статистику за текущий день"""
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT * FROM public.all_castings "
+                                            f"WHERE time_added = '{date_today}'")
+            return result
+
+    async def remove_casting(self, casting_hash):
+        """Удаляем кастинг из базы"""
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"DELETE FROM public.all_castings WHERE casting_hash = '{casting_hash}';")

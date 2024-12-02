@@ -15,6 +15,7 @@ from loader import techno_dict
 
 
 @admin_router.message(Command('user_bot'))
+@admin_router.message(F.text == 'Настройки парсера')
 async def open_user_bot_menu(msg: Message):
     """Открываем меню взаимодействия с юзер-ботом"""
     await msg.answer('Выберете действие:', reply_markup=add_user_bot)

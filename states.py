@@ -58,3 +58,7 @@ class AdminStates(StatesGroup):
     change_api_hash = State()
     change_phone_number = State()
     code_input = State()
+
+    # Взаимодействие с БД
+    set_period = State()
+    set_user_date = State()

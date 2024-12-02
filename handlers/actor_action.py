@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from aiogram.types import Message, CallbackQuery
 from aiogram import F
@@ -8,7 +9,8 @@ from aiogram.fsm.context import FSMContext
 from loader import base, techno_dict, dp
 from utils.users_router import users_router
 from states import ActorsState
-from keyboards.inline_actors import setup_keyboard, education_choice, experience_choice, role_interested
+from keyboards.inline_actors import (setup_keyboard, education_choice,
+                                     experience_choice, role_interested, button_for_casting)
 
 
 @dp.message(F.forward_origin)
@@ -25,7 +27,6 @@ async def for_forward_message(msg: Message):
                     await msg.forward(user_id)
                     user_for_drop = user
                     break
-            break
         techno_dict['forwarding'].remove(user_for_drop)
     else:
         await msg.answer('Нельзя пересылать боту сообщения!')
@@ -53,6 +54,83 @@ async def get_origin_request(callback: CallbackQuery, state: FSMContext):
         next_origin_message=(origin_message[1] + 1),
         user_id=callback.from_user.id
     )
+
+
+# ====================
+# Работа с "Избранным"
+# ====================
+
+@users_router.callback_query(F.data.startswith('favorites_'))
+async def add_to_favorites(callback: CallbackQuery):
+    """Добавляем кастинг в избранное"""
+    await callback.answer()
+    # Все кастинги в избранном хранятся в виде одной длинной строки с хэшами кастингов разделенных
+    # символом "_". По этому, для удаления и добавления в избранное будем проводить операции со всей строкой ¯\_(ツ)_/¯
+    user_favorites = (await base.get_actor_favorites(callback.from_user.id))[0]['favorites']
+    # При первом добавлении из БД вернется None
+    new_favorite = callback.data.replace('favorites_', '')
+    try:
+        user_favorites = user_favorites.split('_')
+        if new_favorite not in user_favorites:
+            user_favorites.append(new_favorite)
+            user_favorites = '_'.join(user_favorites)
+            await base.set_actor_favorites(callback.from_user.id, user_favorites)
+            await callback.message.answer('Кастинг добавлен в "Избранное"')
+        else:
+            await callback.message.answer('Данный кастинг уже есть в избранном!')
+    except AttributeError:  # Выскочит при пустом "Избранное"
+        await base.set_actor_favorites(callback.from_user.id, new_favorite)
+        await callback.message.answer('Кастинг добавлен в "Избранное"')
+
+
+@users_router.message(F.text == 'Избранное')
+async def get_favorites_list(msg: Message):
+    """Открываем список избранного"""
+    user_favorites = (await base.get_actor_favorites(msg.from_user.id))[0]['favorites']
+    try:
+        user_favorites = user_favorites.split('_')
+        for c_hash in user_favorites:
+            casting = (await base.get_casting(c_hash))[0]
+            casting_data = json.loads(casting['casting_data'])
+            casting_origin = [int(i) for i in casting['casting_origin'].split('_')]
+            msg_text = (f'Сохраненный кастинг\n\nГород кастинга: {casting_data["search_city"]}\n'
+                        f'Название проекта: {casting_data["project_name"]}\n'
+                        f'Тип проекта: {casting_data["project_type"]}\n'
+                        f'Дата съемок: {casting_data["filming_dates"]}\n'
+                        f'Место съемок: {casting_data["filming_location"]}\n')
+            await msg.answer(msg_text, reply_markup=await button_for_casting(casting_origin[0], casting_origin[1],
+                                                                             casting_hash_rm=c_hash))
+
+    except AttributeError:  # Выскочит при пустом "Избранное"
+        await msg.answer('В "Избранном" пусто')
+    except IndexError:
+        await msg.answer('В "Избранном" пусто')
+    except Exception as e:
+        await msg.answer('Кастинг был удален администрацией!')
+        print(e)
+
+
+@users_router.callback_query(F.data.startswith('rm_favorites_'))
+async def remove_favorite_casting(callback: CallbackQuery):
+    """Удаляем кастинг из избранного"""
+    await callback.answer()
+    # Все кастинги в избранном хранятся в виде одной длинной строки с хэшами кастингов разделенных
+    # символом "_". По этому, для удаления и добавления в избранное будем проводить операции со всей строкой ¯\_(ツ)_/¯
+    user_favorites = (await base.get_actor_favorites(callback.from_user.id))[0]['favorites']
+    rm_favorites = callback.data.replace('rm_favorites_', '')
+    try:
+        user_favorites = user_favorites.split('_')
+        print(user_favorites, rm_favorites)
+        if rm_favorites in user_favorites:
+            user_favorites.remove(rm_favorites)
+            user_favorites = '_'.join(user_favorites)
+            await base.set_actor_favorites(callback.from_user.id, user_favorites)
+            await callback.message.answer('Кастинг удален из "Избранное"')
+        else:
+            await callback.message.answer('Кастинг уже удален!')
+    except Exception as e:  # Выскочит при пустом "Избранное"
+        print(e)
+        await callback.message.answer('Кастинг уже удален!')
 
 
 # ====================

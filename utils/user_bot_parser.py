@@ -55,6 +55,7 @@ class UserBotParser:
         # Когда переброшенное сообщение прейдет от парсера к боту, мы достанем информацию из пересланного сообщения и
         # сравним ее с той что храниться в списке
         techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(origin_message)})
+        print('Original')
         await self._client.forward_messages(
             chat_id=techno_dict['bot_id'],
             from_chat_id=origin_chat,
@@ -66,6 +67,7 @@ class UserBotParser:
         try:
             prob_text = await self._client.get_messages(origin_chat, next_origin_message)
             if prob_text.media == MessageMediaType.DOCUMENT:
+                print('Document')
                 techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(next_origin_message)})
                 await self._client.forward_messages(
                     chat_id=techno_dict['bot_id'],
@@ -98,10 +100,15 @@ async def parser_start():
     async def my_handler(client: Client, message: Message):
         try:
             casting_data, casting_config, casting_hash = await get_casting_data(message.text)  # Возвращается кортеж
+            if message.forward_from_chat:
+                chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
+            else:
+                chat_id, message_id = message.chat.id, message.id
             await base.add_new_casting(
                 casting_hash=casting_hash,
                 casting_data=json.dumps(casting_data),
-                casting_config=json.dumps(casting_config)
+                casting_config=json.dumps(casting_config),
+                casting_origin='_'.join([str(chat_id), str(message_id)])
             )
             # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
             all_actors = await base.get_all_actors()
@@ -140,20 +147,18 @@ async def parser_start():
                                      f'Описание роли: {role_info["role_description"]}\n'
                                      f'Дополнительные требования: {role_info["additional_requirements"]}\n'
                                      f'Гонорар: {role_info["fee"]}\n\n')
-                    if message.forward_from_chat:
-                        chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
-                    else:
-                        chat_id, message_id = message.chat.id, message.id
 
                     await bot.send_message(
                         chat_id=actor['user_id'],
                         text=msg_text,
                         reply_markup=await button_for_casting(
                             chat_id=chat_id,
-                            message_id=message_id)
+                            message_id=message_id,
+                            casting_hash=casting_hash
+                        )
                     )
 
-        except TypeError as e:  # Значит не кастинг
+        except TypeError as e:  # Значит не кастинг или непредвиденная ошибка
             print(e)
             pass
 

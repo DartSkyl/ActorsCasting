@@ -62,3 +62,13 @@ class AdminStates(StatesGroup):
     # Взаимодействие с БД
     set_period = State()
     set_user_date = State()
+
+
+class AddNewCasting(StatesGroup):
+    """Для добавления нового кастинга"""
+    description = State()
+    cath_file = State()
+
+    e_description = State()
+    e_file = State()
+    edit_new_casting = State()

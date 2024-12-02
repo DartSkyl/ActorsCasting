@@ -93,11 +93,11 @@ async def get_favorites_list(msg: Message):
             casting = (await base.get_casting(c_hash))[0]
             casting_data = json.loads(casting['casting_data'])
             casting_origin = [int(i) for i in casting['casting_origin'].split('_')]
-            msg_text = (f'Сохраненный кастинг\n\nГород кастинга: {casting_data["search_city"]}\n'
-                        f'Название проекта: {casting_data["project_name"]}\n'
-                        f'Тип проекта: {casting_data["project_type"]}\n'
-                        f'Дата съемок: {casting_data["filming_dates"]}\n'
-                        f'Место съемок: {casting_data["filming_location"]}\n')
+            msg_text = (f'<i>Сохраненный кастинг</i>\n\n<b>Город кастинга:</b> {casting_data["search_city"]}\n'
+                        f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
+                        f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
+                        f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
+                        f'<b>Место съемок:</b> {casting_data["filming_location"]}\n')
             await msg.answer(msg_text, reply_markup=await button_for_casting(casting_origin[0], casting_origin[1],
                                                                              casting_hash_rm=c_hash))
 
@@ -120,7 +120,6 @@ async def remove_favorite_casting(callback: CallbackQuery):
     rm_favorites = callback.data.replace('rm_favorites_', '')
     try:
         user_favorites = user_favorites.split('_')
-        print(user_favorites, rm_favorites)
         if rm_favorites in user_favorites:
             user_favorites.remove(rm_favorites)
             user_favorites = '_'.join(user_favorites)
@@ -168,18 +167,18 @@ async def open_acc_setup_menu(msg: Message, state: FSMContext):
     """Открываем меню настройки профиля"""
     actor_data = (await base.get_actor_info(msg.from_user.id))[0]
     msg_text = (f'Текущие настройки профиля:\n\n'
-                f'ФИО: {actor_data["actor_name"]}\n'
-                f'Пол: {dict_for_msg_build[actor_data["sex"]]}\n'
-                f'Возраст по паспорту: {actor_data["passport_age"]}\n'
-                f'Игровой возраст: {actor_data["playing_age"]}\n'
-                f'Образование: {dict_for_msg_build[actor_data["education"]]}\n'
-                f'Город проживания: {actor_data["geo_location"]}\n'
-                f'Контактные данные: {actor_data["contacts"]}\n'
-                f'Контактные данные агента: {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
-                f'Опыт: {dict_for_msg_build[actor_data["have_experience"]]}\n'
-                f'Портфолио: {actor_data["portfolio"]}\n'
-                f'Соц. сети: {actor_data["social"]}\n'
-                f'То, что интересует: {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"].split("+")])}'
+                f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
+                f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
+                f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
+                f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
+                f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
+                f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
+                f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
+                f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
+                f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
+                f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
+                f'<b>Соц. сети:</b> {actor_data["social"]}\n'
+                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"].split("+")])}'
                 f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
     await state.set_data({'roles_type_interest': [], 'projects_interest': []})
     await msg.answer(msg_text, reply_markup=setup_keyboard)
@@ -214,18 +213,18 @@ async def review_all_data_after_setup(callback: CallbackQuery, state: FSMContext
     await callback.answer()
     actor_data = (await base.get_actor_info(callback.from_user.id))[0]
     msg_text = (f'Текущие настройки профиля:\n\n'
-                f'ФИО: {actor_data["actor_name"]}\n'
-                f'Пол: {dict_for_msg_build[actor_data["sex"]]}\n'
-                f'Возраст по паспорту: {actor_data["passport_age"]}\n'
-                f'Игровой возраст: {actor_data["playing_age"]}\n'
-                f'Образование: {dict_for_msg_build[actor_data["education"]]}\n'
-                f'Город проживания: {actor_data["geo_location"]}\n'
-                f'Контактные данные: {actor_data["contacts"]}\n'
-                f'Контактные данные агента: {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
-                f'Опыт: {dict_for_msg_build[actor_data["have_experience"]]}\n'
-                f'Портфолио: {actor_data["portfolio"]}\n'
-                f'Соц. сети: {actor_data["social"]}\n'
-                f'То, что интересует: {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"].split("+")])}'
+                f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
+                f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
+                f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
+                f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
+                f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
+                f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
+                f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
+                f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
+                f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
+                f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
+                f'<b>Соц. сети:</b> {actor_data["social"]}\n'
+                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"].split("+")])}'
                 f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
     await callback.message.answer(msg_text, reply_markup=setup_keyboard)
 

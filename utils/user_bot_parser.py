@@ -55,7 +55,6 @@ class UserBotParser:
         # Когда переброшенное сообщение прейдет от парсера к боту, мы достанем информацию из пересланного сообщения и
         # сравним ее с той что храниться в списке
         techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(origin_message)})
-        print('Original')
         await self._client.forward_messages(
             chat_id=techno_dict['bot_id'],
             from_chat_id=origin_chat,
@@ -67,7 +66,6 @@ class UserBotParser:
         try:
             prob_text = await self._client.get_messages(origin_chat, next_origin_message)
             if prob_text.media == MessageMediaType.DOCUMENT:
-                print('Document')
                 techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(next_origin_message)})
                 await self._client.forward_messages(
                     chat_id=techno_dict['bot_id'],
@@ -134,19 +132,19 @@ async def parser_start():
                                     role_list.append(casting_data['role_description'][role_index - 1])
 
                 if len(role_list) > 0:
-                    msg_text = (f'Название проекта: {casting_data["project_name"]}\n'
-                                f'Место проведения кастинга: {casting_data["search_city"]}\n'
-                                f'Тип проекта: {casting_data["project_type"]}\n'
-                                f'Дата съемок: {casting_data["filming_dates"]}\n'
-                                f'Место съемок: {casting_data["filming_location"]}\n\n')
+                    msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
+                                f'<b>Место проведения кастинга:</b> {casting_data["search_city"]}\n'
+                                f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
+                                f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
+                                f'<b>Место съемок:</b> {casting_data["filming_location"]}\n\n')
                     for role_info in role_list:
-                        msg_text += (f'Пол актера: {role_info["actor_sex"]}\n'
-                                     f'Возраст актера: {role_info["age_restrictions"]}\n'
-                                     f'Название роли: {role_info["role_name"]}\n'
-                                     f'Тип роли: {role_info["role_type"]}\n'
-                                     f'Описание роли: {role_info["role_description"]}\n'
-                                     f'Дополнительные требования: {role_info["additional_requirements"]}\n'
-                                     f'Гонорар: {role_info["fee"]}\n\n')
+                        msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
+                                     f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
+                                     f'<b>Название роли:</b> {role_info["role_name"]}\n'
+                                     f'<b>Тип роли:</b> {role_info["role_type"]}\n'
+                                     f'<b>Описание роли:</b> {role_info["role_description"]}\n'
+                                     f'<b>Дополнительные требования:</b> {role_info["additional_requirements"]}\n'
+                                     f'<b>Гонорар:</b> {role_info["fee"]}\n\n')
 
                     await bot.send_message(
                         chat_id=actor['user_id'],

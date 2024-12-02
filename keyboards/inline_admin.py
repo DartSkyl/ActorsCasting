@@ -38,3 +38,9 @@ async def button_for_casting_admin(origin, casting_hash, viewing=False):
             [InlineKeyboardButton(text='Удалить', callback_data=f'rm_admin_{casting_hash}')]
         ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+check_new_casting = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Изменить описание кастинга', callback_data='new_casting_edit_text')],
+    [InlineKeyboardButton(text='Изменить файл с текстом', callback_data='new_casting_edit_file')]
+])

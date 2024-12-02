@@ -197,18 +197,18 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     actor_data = await state.get_data()
     msg_text = (f'Проверь правильность введенных данных:\n\n'
-                f'ФИО: {actor_data["actor_name"]}\n'
-                f'Пол: {dict_for_msg_build[actor_data["sex"]]}\n'
-                f'Возраст по паспорту: {actor_data["passport_age"]}\n'
-                f'Игровой возраст: {actor_data["playing_age"]}\n'
-                f'Образование: {dict_for_msg_build[actor_data["education"]]}\n'
-                f'Город проживания: {actor_data["geo_location"]}\n'
-                f'Контактные данные: {actor_data["contacts"]}\n'
-                f'Контактные данные агента: {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
-                f'Опыт: {dict_for_msg_build[actor_data["have_experience"]]}\n'
-                f'Портфолио: {actor_data["portfolio"]}\n'
-                f'Соц. сети: {actor_data["social"]}\n'
-                f'То, что интересует: {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}'
+                f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
+                f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
+                f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
+                f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
+                f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
+                f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
+                f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
+                f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
+                f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
+                f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
+                f'<b>Соц. сети:</b> {actor_data["social"]}\n'
+                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}'
                 f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
     await callback.message.answer(msg_text, reply_markup=editor_keyboard)
     await callback.message.answer('Если все верно нажмите "Зарегистрироваться"', reply_markup=registry_button)
@@ -218,19 +218,19 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
 async def review_all_data_after_edit(msg: Message, state: FSMContext):
     """Выводим все введенные данные и даем возможность исправить"""
     actor_data = await state.get_data()
-    msg_text = (f'Проверь правильность введенных данных:\n\n'
-                f'ФИО: {actor_data["actor_name"]}\n'
-                f'Пол: {dict_for_msg_build[actor_data["sex"]]}\n'
-                f'Возраст по паспорту: {actor_data["passport_age"]}\n'
-                f'Игровой возраст: {actor_data["playing_age"]}\n'
-                f'Образование: {dict_for_msg_build[actor_data["education"]]}\n'
-                f'Город проживания: {actor_data["geo_location"]}\n'
-                f'Контактные данные: {actor_data["contacts"]}\n'
-                f'Контактные данные агента: {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
-                f'Опыт: {dict_for_msg_build[actor_data["have_experience"]]}\n'
-                f'Портфолио: {actor_data["portfolio"]}\n'
-                f'Соц. сети: {actor_data["social"]}\n'
-                f'То, что интересует: {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}'
+    msg_text = (f'Проверь правильность введенных данных:</b>\n\n'
+                f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
+                f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
+                f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
+                f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
+                f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
+                f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
+                f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
+                f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
+                f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
+                f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
+                f'<b>Соц. сети:</b> {actor_data["social"]}\n'
+                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}'
                 f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
     await msg.answer(msg_text, reply_markup=editor_keyboard)
     await msg.answer('Если все верно нажмите "Зарегистрироваться"', reply_markup=registry_button)

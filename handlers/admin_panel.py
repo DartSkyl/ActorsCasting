@@ -5,13 +5,14 @@ from aiogram.types import Message, CallbackQuery
 from aiogram import F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.exceptions import TelegramBadRequest
 
 from loader import dp, techno_dict, bot, base
 from utils.admin_router import admin_router
-from keyboards.reply import admin_main, cancel_button
-from keyboards.inline_admin import casting_bd_period, button_for_casting_admin
-from states import AdminStates
+from utils.users_router import users_router
+from keyboards.reply import admin_main, cancel_button, ready_button, skip_button, add_new_casting
+from keyboards.inline_admin import casting_bd_period, button_for_casting_admin, check_new_casting
+from states import AdminStates, AddNewCasting
+from config import MAIN_GROUP
 
 
 @admin_router.message(Command('admin'))
@@ -131,3 +132,127 @@ async def remove_casting_from_db(callback: CallbackQuery):
     await callback.message.delete()
     await callback.message.answer('Кастинг удален')
 
+
+@users_router.message(F.text == 'Кастинг-директор, желающий разместить кастинг')
+@admin_router.message(F.text == 'Добавить кастинг')
+async def add_new_casting_from_admin_and_director(msg: Message, state: FSMContext):
+    """Начинаем добавления нового кастинга от админа или кастинг директора"""
+    msg_text = """
+Введите описание кастинга. Убедитесь, что оно содержит следующее:
+- Город, где ищут актёра
+- Название проекта
+- Тип проекта (фильм, сериал, реклама, театр, некоммерческий проект и т.д.)
+- Даты съемок
+- Место съемок
+- Требуемый пол
+- Возрастные ограничения
+- Тип роли
+- Описание роли
+- Дополнительные требования
+- Гонорар
+- Почта куда отправлять заявки (или ссылка на канал кастинга, если заявки принимаются в комментариях)"""
+    await msg.answer(msg_text, reply_markup=cancel_button)
+    await state.set_state(AddNewCasting.description)
+
+
+@users_router.message(AddNewCasting.description, F.text != '🚫 Отмена')
+@admin_router.message(AddNewCasting.description, F.text != '🚫 Отмена')
+async def catch_casting_description(msg: Message, state: FSMContext):
+    """Ловим текст с описанием кастинга и предлагаем скинуть файл с текстом для самопроб"""
+    await state.set_data({'casting_description': msg.text})
+    await msg.answer('Отлично! Теперь можете скинуть текст для самопроб в виде файла или нажмите "Пропустить"',
+                     reply_markup=skip_button)
+    await state.set_state(AddNewCasting.cath_file)
+
+
+@users_router.message(AddNewCasting.cath_file, F.text != 'Пропустить')
+@admin_router.message(AddNewCasting.cath_file, F.text != 'Пропустить')
+async def cath_file_with_text(msg: Message, state: FSMContext):
+    """Ловим файл с текстом, если он есть"""
+    if msg.document:
+        await state.update_data({'file_id': msg.document.file_id})
+        new_casting_text = (await state.get_data())['casting_description']
+        await msg.answer('Теперь проверьте правильность введенных данных:')
+        await msg.answer(new_casting_text, reply_markup=check_new_casting)
+        await msg.answer('Если все верно нажмите "Опубликовать кастинг"', reply_markup=add_new_casting)
+        await state.set_state(AddNewCasting.edit_new_casting)
+    else:
+        await msg.answer('Допускается только текстовый файл!')
+
+
+@users_router.message(AddNewCasting.cath_file, F.text == 'Пропустить')
+@admin_router.message(AddNewCasting.cath_file, F.text == 'Пропустить')
+async def next_step_new_casting(msg: Message, state: FSMContext):
+    """Переходим к проверке правильности данных"""
+    new_casting_text = (await state.get_data())['casting_description']
+    await msg.answer('Теперь проверьте правильность введенных данных:')
+    await msg.answer(new_casting_text, reply_markup=check_new_casting)
+    await msg.answer('Если все верно нажмите "Опубликовать кастинг"', reply_markup=add_new_casting)
+    await state.set_state(AddNewCasting.edit_new_casting)
+
+
+@users_router.callback_query(AddNewCasting.edit_new_casting, F.data.startswith('new_casting_edit_'))
+@admin_router.callback_query(AddNewCasting.edit_new_casting, F.data.startswith('new_casting_edit_'))
+async def edit_new_casting_menu(callback: CallbackQuery, state: FSMContext):
+    """Открываем меню редактирования кастинга"""
+    text = """
+Введите описание кастинга. Убедитесь, что оно содержит следующее:
+- Город, где ищут актёра
+- Название проекта
+- Тип проекта (фильм, сериал, реклама, театр, некоммерческий проект и т.д.)
+- Даты съемок
+- Место съемок
+- Требуемый пол
+- Возрастные ограничения
+- Тип роли
+- Описание роли
+- Дополнительные требования
+- Гонорар
+- Почта куда отправлять заявки (или ссылка на канал кастинга, если заявки принимаются в комментариях)"""
+    menu_dict = {
+        'new_casting_edit_text': (AddNewCasting.e_description, text),
+        'new_casting_edit_file': (AddNewCasting.e_file, 'Скиньте файл с текстом для самопроб:')
+    }
+    await callback.answer()
+    await callback.message.answer(menu_dict[callback.data][1], reply_markup=cancel_button)
+    await state.set_state(menu_dict[callback.data][0])
+
+
+@users_router.message(AddNewCasting.edit_new_casting, F.text == 'Опубликовать кастинг')
+@admin_router.message(AddNewCasting.edit_new_casting, F.text == 'Опубликовать кастинг')
+async def add_new_casting_func(msg: Message, state: FSMContext):
+    """Публикуем новый кастинг в заранее подготовленный канал"""
+    casting_data = await state.get_data()
+    await bot.send_message(chat_id=MAIN_GROUP, text=casting_data['casting_description'])
+    if casting_data.get('file_id'):
+        await bot.send_document(chat_id=MAIN_GROUP, document=casting_data['file_id'])
+    await msg.answer('Кастинг успешно опубликован!')
+    await state.clear()
+    from handlers.actors_registration import start_func
+    await start_func(msg)
+
+
+@users_router.message(AddNewCasting.e_description)
+@admin_router.message(AddNewCasting.e_description)
+async def edit_new_casting_description(msg: Message,  state: FSMContext):
+    """Ловим новый текст кастинга"""
+    await state.update_data({'casting_description': msg.text})
+    await next_step_new_casting(msg, state)
+
+
+@users_router.message(AddNewCasting.e_file)
+@admin_router.message(AddNewCasting.e_file)
+async def edit_file_new_casting(msg: Message, state: FSMContext):
+    """Ловим новый файл"""
+    if msg.document:
+        await state.update_data({'file_id': msg.document.file_id})
+        await next_step_new_casting(msg, state)
+    else:
+        await msg.answer('Допускается только текстовый файл!')
+
+
+@dp.message(F.text == '🚫 Отмена')
+async def cancel_func(msg: Message, state: FSMContext):
+    await state.clear()
+    from handlers.actors_registration import start_func
+    await start_func(msg)

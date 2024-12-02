@@ -9,6 +9,8 @@ else:
 
 BOT_TOKEN = os.getenv('bot_token')
 ADMINS = {int(i) for i in os.getenv('admins_id').split()}
+MAIN_GROUP = int(os.getenv('main_group'))
+
 DB_INFO = (
     os.getenv('db_user'),
     os.getenv('db_pass'),

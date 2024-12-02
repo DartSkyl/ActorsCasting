@@ -9,8 +9,13 @@ from aiogram.utils.keyboard import ReplyKeyboardMarkup
 admin_main = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='База данных кастингов')],
     [KeyboardButton(text='Настройки парсера')],
-    [KeyboardButton(text='Статистика')]
+    # [KeyboardButton(text='Статистика')],
+    [KeyboardButton(text='Добавить кастинг')]
 ], resize_keyboard=True)
+
+add_new_casting = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Опубликовать кастинг')]
+], one_time_keyboard=True, resize_keyboard=True)
 
 # ====================
 # Пользовательская клавиатура

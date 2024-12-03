@@ -1,0 +1,12 @@
+[Unit]
+Description=ActorsCasting bot
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/root/ActorsCasting/venv/bin/python /root/ActorsCasting/main.py
+WorkingDirectory=/root/ActorsCasting/
+OOMScoreAdjust=-1000
+
+[Install]
+WantedBy=multi-user.target

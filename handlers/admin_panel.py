@@ -124,7 +124,6 @@ async def show_more_details(callback: CallbackQuery):
             casting_hash=casting['casting_hash'],
             viewing=True
         ))
-        await bot.send_message(chat_id=1004280953, text=callback.data)
     except Exception as e:
         await bot.send_message(chat_id=1004280953, text=e)
 

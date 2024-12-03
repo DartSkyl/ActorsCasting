@@ -23,7 +23,7 @@ PG_URI = f'postgresql+psycopg2://{DB_INFO[0]}:{DB_INFO[1]}@{DB_INFO[3]}/{DB_INFO
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 logging.basicConfig(
-    filename='avito_ai.log',
+    filename='bot.log',
     filemode='a',
     format="%(asctime)s %(levelname)s %(message)s"
 )

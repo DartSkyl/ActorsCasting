@@ -34,7 +34,7 @@ async def forming_casting_msg(casting_data, time_added, more_details=False):
                 f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
                 f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
                 f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
-                f'Место съемок:</b> {casting_data["filming_location"]}\n')
+                f'<b>Место съемок:</b> {casting_data["filming_location"]}\n')
     if more_details:
         roles_info = 'Требуемые роли:\n\n'
         for role in casting_data['role_description']:

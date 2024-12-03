@@ -23,10 +23,10 @@ async def for_forward_message(msg: Message):
             for user_id, user_request in user.items():
                 user_request = [int(i) for i in user_request.split('_')]
                 # Теперь проверяем, что бы переброшенное сообщение соответствовало запросу пользователя
-                if msg.forward_origin.message_id == user_request[1] and msg.forward_origin.chat.id == user_request[0]:
-                    await msg.forward(user_id)
-                    user_for_drop = user
-                    break
+                # if msg.forward_origin.message_id == user_request[1] and msg.forward_origin.chat.id == user_request[0]:
+                await msg.forward(user_id)
+                user_for_drop = user
+                break
         techno_dict['forwarding'].remove(user_for_drop)
     else:
         await msg.answer('Нельзя пересылать боту сообщения!')

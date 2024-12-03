@@ -115,17 +115,17 @@ async def get_user_date_interval(msg: Message, state: FSMContext):
 @admin_router.callback_query(F.data.startswith('view_'))
 async def show_more_details(callback: CallbackQuery):
     """Разворачиваем сообщение с кастингом подробнее"""
-    try:
-        await callback.answer()
-        casting = (await base.get_casting(callback.data.replace('view_', '')))[0]
-        msg_text = await forming_casting_msg(json.loads(casting['casting_data']), casting['time_added'], True)
-        await callback.message.edit_text(msg_text, reply_markup=await button_for_casting_admin(
-            origin=casting['casting_origin'],
-            casting_hash=casting['casting_hash'],
-            viewing=True
-        ))
-    except Exception as e:
-        await bot.send_message(chat_id=1004280953, text=e)
+    # try:
+    await callback.answer()
+    casting = (await base.get_casting(callback.data.replace('view_', '')))[0]
+    msg_text = await forming_casting_msg(json.loads(casting['casting_data']), casting['time_added'], True)
+    await callback.message.edit_text(msg_text, reply_markup=await button_for_casting_admin(
+        origin=casting['casting_origin'],
+        casting_hash=casting['casting_hash'],
+        viewing=True
+    ))
+    # except Exception as e:
+    #     await bot.send_message(chat_id=1004280953, text=str(e))
 
 
 @admin_router.callback_query(F.data.startswith('rm_admin_'))

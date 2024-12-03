@@ -30,7 +30,7 @@ async def open_casting_bd_menu(msg: Message, state: FSMContext):
 
 async def forming_casting_msg(casting_data, time_added, more_details=False):
     """Формирует сообщения с информацией о кастинге"""
-    msg_text = (f'<b>Кастинг добавлен:</b> {time_added}\n\nГород кастинга: {casting_data["search_city"]}\n'
+    msg_text = (f'<b>Кастинг добавлен:</b> {time_added}\n\n<b>Город кастинга:</b> {casting_data["search_city"]}\n'
                 f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
                 f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
                 f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'

@@ -16,8 +16,8 @@ async def start_up():
     # Подключаем роутеры
     dp.include_router(admin_router)
     dp.include_router(users_router)
-    # with open('bot.log', 'a') as log_file:
-    #     log_file.write(f'\n========== New bot session {datetime.datetime.now()} ==========\n\n')
+    with open('bot.log', 'a') as log_file:
+        log_file.write(f'\n========== New bot session {datetime.datetime.now()} ==========\n\n')
     print('Стартуем')
     await dp.start_polling(bot)
 

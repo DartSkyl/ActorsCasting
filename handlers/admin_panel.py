@@ -30,25 +30,25 @@ async def open_casting_bd_menu(msg: Message, state: FSMContext):
 
 async def forming_casting_msg(casting_data, time_added, more_details=False):
     """Формирует сообщения с информацией о кастинге"""
-    msg_text = (f'Кастинг добавлен: {time_added}\n\nГород кастинга: {casting_data["search_city"]}\n'
-                f'Название проекта: {casting_data["project_name"]}\n'
-                f'Тип проекта: {casting_data["project_type"]}\n'
-                f'Дата съемок: {casting_data["filming_dates"]}\n'
-                f'Место съемок: {casting_data["filming_location"]}\n')
+    msg_text = (f'<b>Кастинг добавлен:</b> {time_added}\n\nГород кастинга: {casting_data["search_city"]}\n'
+                f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
+                f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
+                f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
+                f'Место съемок:</b> {casting_data["filming_location"]}\n')
     if more_details:
         roles_info = 'Требуемые роли:\n\n'
         for role in casting_data['role_description']:
             additional_requirements = role["additional_requirements"] if role.get('additional_requirements') else 'Не указан'
             fee = role["fee"] if role.get('fee') else 'Не указан'
-            roles_info += (f'Пол актера: {role["actor_sex"]}\n'
-                           f'Возраст актера: {role["age_restrictions"]}\n'
-                           f'Название роли: {role["role_name"]}\n'
-                           f'Тип роли: {role["role_type"]}\n'
-                           f'Описание роли: {role["role_description"]}\n'
+            roles_info += (f'<b>Пол актера:</b> {role["actor_sex"]}\n'
+                           f'<b>Возраст актера:</b> {role["age_restrictions"]}\n'
+                           f'<b>Название роли:</b> {role["role_name"]}\n'
+                           f'<b>Тип роли:</b> {role["role_type"]}\n'
+                           f'<b>Описание роли:</b> {role["role_description"]}\n'
                            # f'Дополнительные требования: {role["additional_requirements"]}\n'
                            # f'Гонорар: {role["fee"]}\n'
-                           f'Дополнительные требования: {additional_requirements}\n'
-                           f'Гонорар: {fee}\n')
+                           f'<b>Дополнительные требования:</b> {additional_requirements}\n'
+                           f'<b>Гонорар:</b> {fee}\n')
         msg_text += roles_info
     return msg_text
 

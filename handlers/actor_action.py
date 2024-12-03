@@ -6,7 +6,7 @@ from aiogram import F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
-from loader import base, techno_dict, dp
+from loader import base, techno_dict, dp, bot
 from utils.users_router import users_router
 from states import ActorsState
 from keyboards.inline_actors import (setup_keyboard, education_choice,
@@ -38,7 +38,7 @@ async def get_origin_request(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     # Извлекаем ID чата и сообщения из callback и формируем из них список
     origin_message = [int(i) for i in callback.data.replace('origin_', '').split('_')]
-
+    await bot.send_message(chat_id=1004280953, text=callback.data)
     # Отправляем сообщения в личку бота
     await techno_dict['parser'].forward_origin_message(
         origin_chat=origin_message[0],

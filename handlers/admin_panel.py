@@ -48,7 +48,7 @@ async def forming_casting_msg(casting_data, time_added, more_details=False):
                            # f'Дополнительные требования: {role["additional_requirements"]}\n'
                            # f'Гонорар: {role["fee"]}\n'
                            f'<b>Дополнительные требования:</b> {additional_requirements}\n'
-                           f'<b>Гонорар:</b> {fee}\n')
+                           f'<b>Гонорар:</b> {fee}\n\n')
         msg_text += roles_info
     return msg_text
 

@@ -6,6 +6,7 @@ from pyrogram.enums.message_media_type import MessageMediaType
 from pyrogram.errors.exceptions.bad_request_400 import ChatForwardsRestricted
 
 from aiogram.types.chat_member_member import ChatMemberMember
+from aiogram.types.chat_member_left import ChatMemberLeft
 
 from loader import techno_dict, bot, base
 from utils.ai_parser import get_casting_data
@@ -95,7 +96,9 @@ async def check_paid(user_id):
     канал. Т.е. если подписчик в этом канале есть, значит подписка оплачена и наоборот. Так что будем проверять наличие
     пользователя в группе на предмет оплаченной подписки. Если вы ничего не поняли, у меня для вас плохие новости"""
     is_paid = await bot.get_chat_member(chat_id=CONTROL_GROUP, user_id=user_id)
-    return isinstance(is_paid, ChatMemberMember)
+    if not isinstance(is_paid, ChatMemberLeft):
+        return True
+    return False
 
 
 async def parser_load():

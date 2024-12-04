@@ -70,12 +70,13 @@ async def get_origin_request(callback: CallbackQuery, state: FSMContext):
 @users_router.message(F.text == 'Подписка')
 async def open_subscription_page(msg: Message):
     """Отдаем ссылку на страницу с оплатой"""
-    if await check_paid(msg.from_user.id):
+    is_paid = await check_paid(msg.from_user.id)
+    if is_paid:
         msg_text = 'Ваша подписка активна\n'
     else:
         msg_text = 'У вас нет подписки\n'
 
-    await msg.answer((msg_text + 'Страница управления подпиской:'), reply_markup=await paid_url(msg.from_user.id))
+    await msg.answer((msg_text + 'Страница управления подпиской:'), reply_markup=await paid_url(msg.from_user.id, is_paid))
 
 
 @users_router.message(Command('support'))

@@ -77,8 +77,11 @@ async def button_for_casting(chat_id, message_id, casting_hash=None, casting_has
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-async def paid_url(user_id):
+async def paid_url(user_id, is_paid):
     """Возвращает кнопку со ссылкой для оплаты"""
-    button = [[InlineKeyboardButton(text='Оплатить подписку', url=f'{PAYWALL_URL + str(user_id)}')]]
+    if not is_paid:
+        button = [[InlineKeyboardButton(text='Оплатить подписку', url=f'{PAYWALL_URL + str(user_id)}')]]
+    else:
+        button = [[InlineKeyboardButton(text='Управление подпиской', url=f'{PAYWALL_URL + str(user_id)}')]]
     return InlineKeyboardMarkup(inline_keyboard=button)
 

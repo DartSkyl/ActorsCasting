@@ -3,6 +3,7 @@ import json
 from pyrogram import Client
 from pyrogram.types import Message
 from pyrogram.enums.message_media_type import MessageMediaType
+from pyrogram.errors.exceptions.bad_request_400 import ChatForwardsRestricted
 
 from aiogram.types.chat_member_member import ChatMemberMember
 
@@ -58,11 +59,18 @@ class UserBotParser:
         # Когда переброшенное сообщение прейдет от парсера к боту, мы достанем информацию из пересланного сообщения и
         # сравним ее с той что храниться в списке
         techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(origin_message)})
-        await self._client.forward_messages(
-            chat_id=techno_dict['bot_id'],
-            from_chat_id=origin_chat,
-            message_ids=origin_message
-        )
+        try:
+            await self._client.forward_messages(
+                chat_id=techno_dict['bot_id'],
+                from_chat_id=origin_chat,
+                message_ids=origin_message
+            )
+        except ChatForwardsRestricted:  # Если пересылка запрещена
+            msg_text = await self._client.get_messages(
+                chat_id=origin_chat,
+                message_ids=origin_message
+            )
+            await bot.send_message(chat_id=user_id, text=msg_text.text)
 
     async def check_text_for_prob(self, user_id, origin_chat, next_origin_message):
         """Этим методом проверяем есть ли текст проб в следующем сообщении в виде файла"""

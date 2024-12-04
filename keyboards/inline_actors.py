@@ -1,4 +1,5 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton, InlineKeyboardMarkup
+from config import PAYWALL_URL
 
 
 sex_choice = InlineKeyboardMarkup(inline_keyboard=[
@@ -74,3 +75,10 @@ async def button_for_casting(chat_id, message_id, casting_hash=None, casting_has
             [InlineKeyboardButton(text='Удалить из избранного', callback_data=f'rm_favorites_{casting_hash_rm}')]
         ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+async def paid_url(user_id):
+    """Возвращает кнопку со ссылкой для оплаты"""
+    button = [[InlineKeyboardButton(text='Оплатить подписку', url=f'{PAYWALL_URL + str(user_id)}')]]
+    return InlineKeyboardMarkup(inline_keyboard=button)
+

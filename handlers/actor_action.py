@@ -8,8 +8,10 @@ from aiogram.fsm.context import FSMContext
 
 from loader import base, techno_dict, dp, bot
 from utils.users_router import users_router
+from utils.user_bot_parser import check_paid
 from states import ActorsState
-from keyboards.inline_actors import (setup_keyboard, education_choice,
+from config import SUPPORT
+from keyboards.inline_actors import (setup_keyboard, education_choice, paid_url,
                                      experience_choice, role_interested, button_for_casting)
 
 
@@ -18,19 +20,18 @@ async def for_forward_message(msg: Message):
     """Дле перебрасывания сообщений, сам ты извращенец!"""
     if msg.from_user.id == techno_dict['parser_id']:
         user_for_drop = None
-        with open('bot.log', 'a') as log_file:
+        with open('print.log', 'a') as log_file:
             log_file.write(f'\n=========\n\n{str(techno_dict["forwarding"])}\nstep_1\n')
             for user in techno_dict['forwarding']:
                 # У каждого элемента списка словарь с одним ключем и одним значением и что бы их извлечь делаем так:
                 log_file.write(f'\n=========\n\n{str(techno_dict["forwarding"])}\nstep_2\n')
                 for user_id, user_request in user.items():
-
                     user_request = [int(i) for i in user_request.split('_')]
                     # Теперь проверяем, что бы переброшенное сообщение соответствовало запросу пользователя
                     # if msg.forward_origin.message_id == user_request[1] and msg.forward_origin.chat.id == user_request[0]:
                     await msg.forward(user_id)
                     user_for_drop = user
-                    log_file.write(f'\n=========\n\n{str(techno_dict["forwarding"])}\nstep_3\n')
+                    log_file.write(f'\n=========\n\n{str(techno_dict["forwarding"])}\nstep_3\n=======================\n\n\n\n')
                     break
             techno_dict['forwarding'].remove(user_for_drop)
     else:
@@ -59,6 +60,28 @@ async def get_origin_request(callback: CallbackQuery, state: FSMContext):
         next_origin_message=(origin_message[1] + 1),
         user_id=callback.from_user.id
     )
+
+
+# ====================
+# Работа с подписками
+# ====================
+
+
+@users_router.message(F.text == 'Подписка')
+async def open_subscription_page(msg: Message):
+    """Отдаем ссылку на страницу с оплатой"""
+    if await check_paid(msg.from_user.id):
+        msg_text = 'Ваша подписка активна\n'
+    else:
+        msg_text = 'У вас нет подписки\n'
+
+    await msg.answer((msg_text + 'Страница управления подпиской:'), reply_markup=await paid_url(msg.from_user.id))
+
+
+@users_router.message(Command('support'))
+async def get_support_contact(msg: Message):
+    """Отправляем контакт поддержки"""
+    await msg.answer(f'Со всеми вопросами обращаться сюда {SUPPORT}')
 
 
 # ====================
@@ -185,7 +208,10 @@ async def open_acc_setup_menu(msg: Message, state: FSMContext):
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
                 f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"].split("+")])}'
                 f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
-    await state.set_data({'roles_type_interest': [], 'projects_interest': []})
+    await state.set_data({
+        'roles_type_interest': actor_data["roles_type_interest"].split("+"),
+        'projects_interest': actor_data["projects_interest"].split("+")
+    })
     await msg.answer(msg_text, reply_markup=setup_keyboard)
 
 

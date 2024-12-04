@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from loader import base
 from utils.users_router import users_router
+from utils.user_bot_parser import check_paid
 from states import ActorsState
 from keyboards.reply import role_choice, skip_button, registry_button, main_menu_actor
 from keyboards.inline_actors import sex_choice, education_choice, experience_choice, role_interested, editor_keyboard
@@ -15,6 +16,8 @@ async def start_func(msg: Message):
     """Запускаем взаимодействие с ботом и даем роль на выбор: актер или кастинг-директор"""
     if msg.from_user.id in await base.get_users_id():
         await msg.answer('Выберете действие:', reply_markup=main_menu_actor)
+        if not await check_paid(msg.from_user.id):
+            await msg.answer('Для того что бы получать рассылку из релевантных кастингов необходимо оплатить подписку!')
     else:
         await msg.answer('Привет! Я – ваш помощник в мире кино, театра и рекламы. Моя миссия — помогать актёрам '
                          'находить роли, а кастинг-директорам публиковать кастинги и искать подходящих исполнителей.'

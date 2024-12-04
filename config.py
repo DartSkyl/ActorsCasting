@@ -9,7 +9,10 @@ else:
 
 BOT_TOKEN = os.getenv('bot_token')
 ADMINS = {int(i) for i in os.getenv('admins_id').split()}
-MAIN_GROUP = int(os.getenv('main_group'))
+MAIN_GROUP = int(os.getenv('main_group'))  # Канал для публикации кастингов
+CONTROL_GROUP = int(os.getenv('control_group'))  # Канал для оплаты
+PAYWALL_URL = os.getenv('paywall_url')
+SUPPORT = os.getenv('support')
 
 DB_INFO = (
     os.getenv('db_user'),

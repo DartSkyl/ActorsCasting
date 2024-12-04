@@ -4,9 +4,12 @@ from pyrogram import Client
 from pyrogram.types import Message
 from pyrogram.enums.message_media_type import MessageMediaType
 
+from aiogram.types.chat_member_member import ChatMemberMember
+
 from loader import techno_dict, bot, base
 from utils.ai_parser import get_casting_data
 from keyboards.inline_actors import button_for_casting
+from config import CONTROL_GROUP
 
 
 class UserBotParser:
@@ -79,6 +82,14 @@ class UserBotParser:
             return False
 
 
+async def check_paid(user_id):
+    """Бот подключен к платежной системе paywall. У них контроль подписки осуществляется через контрольный "закрытый"
+    канал. Т.е. если подписчик в этом канале есть, значит подписка оплачена и наоборот. Так что будем проверять наличие
+    пользователя в группе на предмет оплаченной подписки. Если вы ничего не поняли, у меня для вас плохие новости"""
+    is_paid = await bot.get_chat_member(chat_id=CONTROL_GROUP, user_id=user_id)
+    return isinstance(is_paid, ChatMemberMember)
+
+
 async def parser_load():
     if os.path.isfile('CastingParser.session'):
         techno_dict['parser'] = UserBotParser()
@@ -111,50 +122,51 @@ async def parser_start():
             # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
             all_actors = await base.get_all_actors()
             for actor in all_actors:
-                role_index = 0  # Индекс роли, для списка из casting_data
-                role_list = []  # Формируем список из подходящих ролей
-                for role in casting_config:
-                    role_index += 1
-                    # Сначала проверяем пол актера
-                    if actor['sex'] == role['actor_sex']:
-                        # Проверяем, подходит ли проект актеру
-                        if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
-                            # Проверяем, подходит ли тип роли
-                            if role['role_type'] in actor['roles_type_interest'].split('+') or role['role_type'] == 'Unspecified':
-                                # Проверяем возраст актера
-                                # Игровой диапазон актера
-                                a = [int(i) for i in actor['playing_age'].split('-')]
-                                a.sort()
-                                # Возрастной диапазон для роли
-                                b = [int(i) for i in role['age_restrictions'].split('-')]
-                                b.sort()
-                                if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
-                                    role_list.append(casting_data['role_description'][role_index - 1])
+                if await check_paid(actor['user_id']):
+                    role_index = 0  # Индекс роли, для списка из casting_data
+                    role_list = []  # Формируем список из подходящих ролей
+                    for role in casting_config:
+                        role_index += 1
+                        # Сначала проверяем пол актера
+                        if actor['sex'] == role['actor_sex']:
+                            # Проверяем, подходит ли проект актеру
+                            if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
+                                # Проверяем, подходит ли тип роли
+                                if role['role_type'] in actor['roles_type_interest'].split('+') or role['role_type'] == 'Unspecified':
+                                    # Проверяем возраст актера
+                                    # Игровой диапазон актера
+                                    a = [int(i) for i in actor['playing_age'].split('-')]
+                                    a.sort()
+                                    # Возрастной диапазон для роли
+                                    b = [int(i) for i in role['age_restrictions'].split('-')]
+                                    b.sort()
+                                    if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
+                                        role_list.append(casting_data['role_description'][role_index - 1])
 
-                if len(role_list) > 0:
-                    msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
-                                f'<b>Место проведения кастинга:</b> {casting_data["search_city"]}\n'
-                                f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
-                                f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
-                                f'<b>Место съемок:</b> {casting_data["filming_location"]}\n\n')
-                    for role_info in role_list:
-                        msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
-                                     f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
-                                     f'<b>Название роли:</b> {role_info["role_name"]}\n'
-                                     f'<b>Тип роли:</b> {role_info["role_type"]}\n'
-                                     f'<b>Описание роли:</b> {role_info["role_description"]}\n'
-                                     f'<b>Дополнительные требования:</b> {role_info["additional_requirements"]}\n'
-                                     f'<b>Гонорар:</b> {role_info["fee"]}\n\n')
+                    if len(role_list) > 0:
+                        msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
+                                    f'<b>Место проведения кастинга:</b> {casting_data["search_city"]}\n'
+                                    f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
+                                    f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
+                                    f'<b>Место съемок:</b> {casting_data["filming_location"]}\n\n')
+                        for role_info in role_list:
+                            msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
+                                         f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
+                                         f'<b>Название роли:</b> {role_info["role_name"]}\n'
+                                         f'<b>Тип роли:</b> {role_info["role_type"]}\n'
+                                         f'<b>Описание роли:</b> {role_info["role_description"]}\n'
+                                         f'<b>Дополнительные требования:</b> {role_info["additional_requirements"]}\n'
+                                         f'<b>Гонорар:</b> {role_info["fee"]}\n\n')
 
-                    await bot.send_message(
-                        chat_id=actor['user_id'],
-                        text=msg_text,
-                        reply_markup=await button_for_casting(
-                            chat_id=chat_id,
-                            message_id=message_id,
-                            casting_hash=casting_hash
+                        await bot.send_message(
+                            chat_id=actor['user_id'],
+                            text=msg_text,
+                            reply_markup=await button_for_casting(
+                                chat_id=chat_id,
+                                message_id=message_id,
+                                casting_hash=casting_hash
+                            )
                         )
-                    )
 
         except TypeError as e:  # Значит не кастинг или непредвиденная ошибка
             print(e)

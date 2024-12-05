@@ -7,6 +7,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ChatMember
 from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, MEMBER
+from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid
 
 from loader import base, techno_dict, dp, bot
 from utils.users_router import users_router
@@ -23,7 +24,7 @@ async def for_forward_message(msg: Message):
     """Дле перебрасывания сообщений, сам ты извращенец!"""
     if msg.from_user.id == techno_dict['parser_id']:
         user_for_drop = None
-        with open('print.log', 'a') as log_file:
+        async with open('print.log', 'a') as log_file:
             log_file.write(f'\n=========\n\n{str(techno_dict["forwarding"])}\nstep_1\n')
             for user in techno_dict['forwarding']:
                 # У каждого элемента списка словарь с одним ключем и одним значением и что бы их извлечь делаем так:
@@ -31,11 +32,19 @@ async def for_forward_message(msg: Message):
                 for user_id, user_request in user.items():
                     user_request = [int(i) for i in user_request.split('_')]
                     # Теперь проверяем, что бы переброшенное сообщение соответствовало запросу пользователя
-                    # if msg.forward_origin.message_id == user_request[1] and msg.forward_origin.chat.id == user_request[0]:
-                    await msg.forward(user_id)
-                    user_for_drop = user
-                    log_file.write(f'\n=========\n\n{str(techno_dict["forwarding"])}\nstep_3\n=======================\n\n\n\n')
-                    break
+                    try:
+                        if msg.forward_origin.message_id == user_request[1] and msg.forward_origin.chat.id == user_request[0]:
+                            await msg.forward(user_id)
+                            user_for_drop = user
+                            log_file.write(f'\n=========\n\n{str(techno_dict["forwarding"])}\nstep_3\n=======================\n\n\n\n')
+                            break
+                    except AttributeError:  # Если пересылка из чата, то тут мы никак не проверим
+                        await msg.forward(user_id)
+                        user_for_drop = user
+                        log_file.write(
+                            f'\n=========\n\n{str(techno_dict["forwarding"])}\nstep_3\n=======================\n\n\n\n')
+                        break
+
             techno_dict['forwarding'].remove(user_for_drop)
     else:
         await msg.answer('Нельзя пересылать боту сообщения!')

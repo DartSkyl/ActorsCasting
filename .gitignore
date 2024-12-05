@@ -1,6 +1,6 @@
 /.env
 /.venv/
-/bot.log
+/*.log
 /.idea/
 /__pycache__/
 /test.py

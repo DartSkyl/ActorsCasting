@@ -59,8 +59,8 @@ async def set_statistic_period(callback: CallbackQuery, state: FSMContext):
     формирует удобочитаемую строку и сообщением отравляет пользователю"""
     await callback.answer()
     date_interval = {
-        'week': [str(date.today() - timedelta(days=7)), str(date.today() - timedelta(days=1))],
-        'month': [str(date.today() - timedelta(days=30)), str(date.today() - timedelta(days=1))],
+        'period_week': [str(date.today() - timedelta(days=7)), str(date.today() - timedelta(days=1))],
+        'period_month': [str(date.today() - timedelta(days=30)), str(date.today() - timedelta(days=1))],
     }
     castings = None  # Для дальнейшего использования
     if callback.data == 'period_today':

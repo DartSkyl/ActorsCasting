@@ -21,11 +21,21 @@ add_new_casting = ReplyKeyboardMarkup(keyboard=[
 # Пользовательская клавиатура
 # ====================
 
+pay_choice = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Подписка на 30 дней - 599₽')],
+    [KeyboardButton(text='Пробная неделя - 299₽')]
+], one_time_keyboard=True, resize_keyboard=True)
+
 
 role_choice = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='Актёр, ищущий кастинги')],
     [KeyboardButton(text='Кастинг-директор, желающий разместить кастинг')]
 ], one_time_keyboard=True, resize_keyboard=True)
+
+first_answer_button = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Да, было бы здорово! А что, так можно было?')]
+], one_time_keyboard=True, resize_keyboard=True)
+
 
 cancel_button = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='🚫 Отмена')]

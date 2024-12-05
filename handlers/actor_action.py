@@ -5,12 +5,15 @@ from aiogram.types import Message, CallbackQuery
 from aiogram import F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from aiogram.types import ChatMember
+from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, MEMBER
 
 from loader import base, techno_dict, dp, bot
 from utils.users_router import users_router
 from utils.user_bot_parser import check_paid
 from states import ActorsState
-from config import SUPPORT
+from config import SUPPORT, CONTROL_GROUP
+from keyboards.reply import main_menu_actor
 from keyboards.inline_actors import (setup_keyboard, education_choice, paid_url,
                                      experience_choice, role_interested, button_for_casting)
 
@@ -65,6 +68,15 @@ async def get_origin_request(callback: CallbackQuery, state: FSMContext):
 # ====================
 # Работа с подписками
 # ====================
+
+
+@dp.chat_member(ChatMemberUpdatedFilter(member_status_changed=IS_NOT_MEMBER >> MEMBER))
+async def catch_new_member(chat_member: ChatMember):
+    """Если актер оплатил подписку, то он появиться в контрольной группе. Отловим это событие"""
+    if chat_member.chat.id == CONTROL_GROUP:
+        msg_text = ('Подписка оформлена, спасибо за доверие! Пошел подбирать для тебя кастинги. Как только найду '
+                    'подходящий, моментально пришлю его тебе сюда. Подавай заявки и получай роли!')
+        await bot.send_message(chat_id=chat_member.from_user.id, text=msg_text, reply_markup=main_menu_actor)
 
 
 @users_router.message(F.text == 'Подписка')
@@ -203,7 +215,7 @@ async def open_acc_setup_menu(msg: Message, state: FSMContext):
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
                 f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
                 f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
-                f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
+                # f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
@@ -252,7 +264,7 @@ async def review_all_data_after_setup(callback: CallbackQuery, state: FSMContext
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
                 f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
                 f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
-                f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
+                # f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'

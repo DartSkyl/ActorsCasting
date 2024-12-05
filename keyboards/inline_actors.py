@@ -15,9 +15,9 @@ education_choice = InlineKeyboardMarkup(inline_keyboard=[
 
 experience_choice = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Опыта нет, я - новичок', callback_data='exp_null')],
-    [InlineKeyboardButton(text='Снималась(ся) только в рекламе / массовках/групповках', callback_data='exp_ads_')],
-    [InlineKeyboardButton(text='Снималась(ся) в эпизодах / некоммерческих проектах', callback_data='exp_free_')],
-    [InlineKeyboardButton(text='Есть второстепенные / главные роли в полнометражных фильмах/сериалах', callback_data='exp_main')]
+    [InlineKeyboardButton(text='Съёмки в рекламе/ массовках/групповках', callback_data='exp_ads_')],
+    [InlineKeyboardButton(text='Эпизоды/ некоммерч. проекты', callback_data='exp_free_')],
+    [InlineKeyboardButton(text='Есть второстеп./ главные роли', callback_data='exp_main')]
 ])
 
 role_interested = InlineKeyboardMarkup(inline_keyboard=[
@@ -41,7 +41,7 @@ editor_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить образование', callback_data='edit_education')],
     [InlineKeyboardButton(text='Изменить город проживания', callback_data='edit_geo_location')],
     [InlineKeyboardButton(text='Изменить контактные данные', callback_data='edit_contacts')],
-    [InlineKeyboardButton(text='Изменить контактные данные агента', callback_data='edit_agent_contact')],
+    # [InlineKeyboardButton(text='Изменить контактные данные агента', callback_data='edit_agent_contact')],
     [InlineKeyboardButton(text='Изменить опыт', callback_data='edit_have_experience')],
     [InlineKeyboardButton(text='Изменить портфолио', callback_data='edit_portfolio')],
     [InlineKeyboardButton(text='Изменить соц. сети', callback_data='edit_social')],
@@ -54,7 +54,7 @@ setup_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить образование', callback_data='setup_education')],
     [InlineKeyboardButton(text='Изменить город проживания', callback_data='setup_geo_location')],
     [InlineKeyboardButton(text='Изменить контактные данные', callback_data='setup_contacts')],
-    [InlineKeyboardButton(text='Изменить контактные данные агента', callback_data='setup_agent_contact')],
+    # [InlineKeyboardButton(text='Изменить контактные данные агента', callback_data='setup_agent_contact')],
     [InlineKeyboardButton(text='Изменить опыт', callback_data='setup_have_experience')],
     [InlineKeyboardButton(text='Изменить портфолио', callback_data='setup_portfolio')],
     [InlineKeyboardButton(text='Изменить соц. сети', callback_data='setup_social')],

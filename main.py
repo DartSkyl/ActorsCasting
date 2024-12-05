@@ -5,8 +5,9 @@ from aiogram.types import BotCommand
 from utils.admin_router import admin_router
 from utils.users_router import users_router
 from utils.user_bot_parser import parser_load
+from utils.first_contact import FirstContact
 import handlers  # noqa
-from loader import dp, bot, db_connect, get_bot_id
+from loader import dp, bot, db_connect, get_bot_id, techno_dict
 
 
 async def start_up():
@@ -16,6 +17,8 @@ async def start_up():
     await parser_load()
     # Сохраняем ID бота для дальнейших операций
     await get_bot_id()
+    # Для напоминания о себе
+    techno_dict['first_contact'] = FirstContact()
     # Подключаем роутеры
     dp.include_router(admin_router)
     dp.include_router(users_router)

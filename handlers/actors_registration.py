@@ -3,12 +3,12 @@ from aiogram import F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
-from loader import base
+from loader import base, techno_dict
 from utils.users_router import users_router
 from utils.user_bot_parser import check_paid
 from states import ActorsState
-from keyboards.reply import role_choice, skip_button, registry_button, main_menu_actor
-from keyboards.inline_actors import sex_choice, education_choice, experience_choice, role_interested, editor_keyboard
+from keyboards.reply import role_choice, skip_button, registry_button, main_menu_actor, first_answer_button, pay_choice
+from keyboards.inline_actors import sex_choice, education_choice, experience_choice, role_interested, editor_keyboard, paid_url
 
 
 @users_router.message(Command('start'))
@@ -27,10 +27,22 @@ async def start_func(msg: Message):
 @users_router.message(F.text == 'Актёр, ищущий кастинги')
 async def start_actor_registration(msg: Message, state: FSMContext):
     """Начало регистрации актера"""
-    await msg.answer('Для начала мне нужно узнать немного о тебе, после чего я добавлю тебя в нашу актёрскую базу, '
-                     'чтобы кастинг-директора и режиссеры смогли о тебе узнать.')
-    await msg.answer('Как тебя зовут (ФИО)?')
+    await msg.answer('Класс, люблю работать с актёрами. Потому что кто-то из них рано '
+                     'или поздно точно станет знаменитым😎')
+    await msg.answer('Хочешь, я буду подбирать тебе целевые кастинги по полу, возрасту и типу проекта?',
+                     reply_markup=first_answer_button)
+    # await state.set_state(ActorsState.actor_name)
+
+
+@users_router.message(F.text == 'Да, было бы здорово! А что, так можно было?')
+async def registration_first_step(msg: Message, state: FSMContext):
+    """Забавный диалог"""
     await state.set_state(ActorsState.actor_name)
+    await msg.answer('Теперь тебе больше не придётся тратить своё время, листая миллионы чатов в поисках "той самой" '
+                     'роли. Я это сделаю за тебя.')
+    await msg.answer('Начнём подбирать тебе кастинги?\nЗаполни, пожалуйста, информацию о себе, чтобы я добавил тебя в '
+                     'нашу <b>актерскую базу</b> и понимал, какие роли тебе предлагать.')
+    await msg.answer('Введи свое ФИО:')
 
 
 @users_router.message(ActorsState.actor_name)
@@ -92,18 +104,17 @@ async def geo_location_saver(msg: Message, state: FSMContext):
 @users_router.message(ActorsState.contacts)
 async def contacts_saver(msg: Message, state: FSMContext):
     """Сохраняем контактные данные и переходим к следующему вопросу"""
-    await state.update_data({'contacts': msg.text})
-    await msg.answer('Контактные данные вашего агента, если есть (телефон, email через запятую)\n'
-                     'Если нет, то нажмите кнопку "Пропустить"', reply_markup=skip_button)
-    await state.set_state(ActorsState.agent_contact)
-
-
-@users_router.message(ActorsState.agent_contact)
-async def agent_contacts_saver(msg: Message, state: FSMContext):
-    """Сохраняем контактные данные агента если есть и переходим к следующему вопросу"""
-    await state.update_data({'agent_contact': msg.text if msg.text != 'Пропустить' else 'empty'})
+    await state.update_data({'contacts': msg.text, 'agent_contact': 'empty'})
     await msg.answer('Есть ли опыт в съемках?', reply_markup=experience_choice)
     await state.set_state(ActorsState.have_experience)
+
+
+# @users_router.message(ActorsState.agent_contact)
+# async def agent_contacts_saver(msg: Message, state: FSMContext):
+#     """Сохраняем контактные данные агента если есть и переходим к следующему вопросу"""
+#     await state.update_data({'agent_contact': msg.text if msg.text != 'Пропустить' else 'empty'})
+#     await msg.answer('Есть ли опыт в съемках?', reply_markup=experience_choice)
+#     await state.set_state(ActorsState.have_experience)
 
 
 @users_router.callback_query(ActorsState.have_experience)
@@ -207,7 +218,7 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
                 f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
                 f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
-                f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
+                # f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
@@ -229,7 +240,7 @@ async def review_all_data_after_edit(msg: Message, state: FSMContext):
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
                 f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
                 f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
-                f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
+                # f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
@@ -260,9 +271,19 @@ async def registry_new_actor(msg: Message, state: FSMContext):
         social=actor_data['social'],
         projects_interest='+'.join(actor_data['projects_interest'])
     )
-    await msg.answer('Отлично! Вы совершили большой шаг вперед в своей карьере! Поздравляем!',
-                     reply_markup=main_menu_actor)
+    await msg.answer('Отлично! Теперь я понимаю, какие кастинги тебе подойдут и готов мониторить и присылать их '
+                     'тебе и днём и ночью.\nВыбери подходящий вариант нашего дальнейшего взаимодействия:',
+                     reply_markup=pay_choice)
+    await techno_dict['first_contact'].wait_answer(user_id=str(msg.from_user.id), message=msg)
     await state.clear()
+
+
+@users_router.message(F.text.in_(['Подписка на 30 дней - 599₽', 'Пробная неделя - 299₽']))
+async def get_pay_page(msg: Message):
+    """Возвращаем страницу для оплаты"""
+    await msg.answer((msg.text + '\nСтраница управления подпиской:'),
+                     reply_markup=await paid_url(msg.from_user.id, False))
+    await techno_dict['first_contact'].remove_job(user_id=str(msg.from_user.id))
 
 
 @users_router.message(Command('kill_bot'))

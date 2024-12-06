@@ -158,7 +158,10 @@ async def parser_start():
                                     # Возрастной диапазон для роли
                                     b = [int(i) for i in role['age_restrictions'].split('-')]
                                     b.sort()
-                                    if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
+                                    try:
+                                        if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
+                                            role_list.append(casting_data['role_description'][role_index - 1])
+                                    except Exception:
                                         role_list.append(casting_data['role_description'][role_index - 1])
 
                     if len(role_list) > 0:
@@ -168,13 +171,16 @@ async def parser_start():
                                     f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
                                     f'<b>Место съемок:</b> {casting_data["filming_location"]}\n\n')
                         for role_info in role_list:
+                            additional_requirements = role_info["additional_requirements"] if role_info.get(
+                                'additional_requirements') else 'Не указан'
+                            fee = role_info["fee"] if role_info.get('fee') else 'Не указан'
                             msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
                                          f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
                                          f'<b>Название роли:</b> {role_info["role_name"]}\n'
                                          f'<b>Тип роли:</b> {role_info["role_type"]}\n'
                                          f'<b>Описание роли:</b> {role_info["role_description"]}\n'
-                                         f'<b>Дополнительные требования:</b> {role_info["additional_requirements"]}\n'
-                                         f'<b>Гонорар:</b> {role_info["fee"]}\n\n')
+                                         f'<b>Дополнительные требования:</b> {additional_requirements}\n'
+                                         f'<b>Гонорар:</b> {fee}\n\n')
 
                         await bot.send_message(
                             chat_id=actor['user_id'],

@@ -3,7 +3,7 @@ import json
 from pyrogram import Client
 from pyrogram.types import Message
 from pyrogram.enums.message_media_type import MessageMediaType
-from pyrogram.errors.exceptions.bad_request_400 import ChatForwardsRestricted, ChannelInvalid
+from pyrogram.errors.exceptions.not_acceptable_406 import ChatForwardsRestricted
 
 from aiogram.types.chat_member_member import ChatMemberMember
 from aiogram.types.chat_member_left import ChatMemberLeft
@@ -72,7 +72,7 @@ class UserBotParser:
                 message_ids=origin_message
             )
             await bot.send_message(chat_id=user_id, text=msg_text.text)
-        except ChannelInvalid:  # Проблема новых каналов\групп
+        except Exception:  # Проблема новых каналов\групп
             techno_dict['forwarding'].remove({user_id: str(origin_chat) + '_' + str(origin_message)})
 
     async def check_text_for_prob(self, user_id, origin_chat, next_origin_message):
@@ -120,6 +120,7 @@ async def parser_start():
 
     @app.on_message()
     async def my_handler(client: Client, message: Message):
+        print(message.text)
         try:
             casting_data, casting_config, casting_hash = await get_casting_data(message.text)  # Возвращается кортеж
             if message.forward_from_chat:

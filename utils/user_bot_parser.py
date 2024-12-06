@@ -77,6 +77,7 @@ class UserBotParser:
         except Exception as e:  # Проблема новых каналов\групп
             with open('print.log', 'a') as log_file:
                 log_file.write(f'\n====================\n{str(e)}\n')
+            await bot.send_message(chat_id=user_id, text='Оригинал больше не доступен!')
             techno_dict['forwarding'].remove({user_id: str(origin_chat) + '_' + str(origin_message)})
 
     async def check_text_for_prob(self, user_id, origin_chat, next_origin_message):

@@ -67,11 +67,13 @@ class UserBotParser:
                 message_ids=origin_message
             )
         except ChatForwardsRestricted:  # Если пересылка запрещена
+            techno_dict['forwarding'].remove({user_id: str(origin_chat) + '_' + str(origin_message)})
             msg_text = await self._client.get_messages(
                 chat_id=origin_chat,
                 message_ids=origin_message
             )
             await bot.send_message(chat_id=user_id, text=msg_text.text)
+
         except Exception:  # Проблема новых каналов\групп
             techno_dict['forwarding'].remove({user_id: str(origin_chat) + '_' + str(origin_message)})
 
@@ -120,7 +122,6 @@ async def parser_start():
 
     @app.on_message()
     async def my_handler(client: Client, message: Message):
-        print(message.text)
         try:
             casting_data, casting_config, casting_hash = await get_casting_data(message.text)  # Возвращается кортеж
             if message.forward_from_chat:

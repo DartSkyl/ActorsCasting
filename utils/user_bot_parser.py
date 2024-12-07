@@ -136,8 +136,8 @@ async def parser_start():
 
             await base.add_new_casting(
                 casting_hash=casting_hash,
-                casting_data=json.dumps(casting_data).replace('\\', '\\\\'),
-                casting_config=json.dumps(casting_config).replace('\\', '\\\\'),
+                casting_data=json.dumps(casting_data).replace('\\', ''),
+                casting_config=json.dumps(casting_config).replace('\\', ''),
                 casting_origin='_'.join([str(chat_id), str(message_id)])
             )
 
@@ -170,6 +170,10 @@ async def parser_start():
                                             b = role['age_restrictions'].split('+')
                                             if int(b[0]) <= a[1]:
                                                 role_list.append(casting_data['role_description'][role_index - 1])
+                                    except IndexError:
+                                        b = [int(i) for i in role['age_restrictions'].split('-')]
+                                        if int(b[0]) <= a[1]:
+                                            role_list.append(casting_data['role_description'][role_index - 1])
 
                     if len(role_list) > 0:
                         msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'

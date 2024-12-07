@@ -134,7 +134,7 @@ async def parser_start():
         try:
             try:
                 casting_text = message.text.replace('\\', '')
-            except AttributeError:
+            except AttributeError:  # Если картинка с описанием
                 casting_text = message.caption.replace('\\', '')
             casting_data, casting_config, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
             if message.forward_from_chat:
@@ -216,9 +216,8 @@ async def parser_start():
             pass
         except UniqueViolationError:  # Проскачил уже имеющийся в базе
             pass
-        except AttributeError:  # Загадочные None сообщения
-            with open('print.log', 'a', encoding='utf-8') as file:
-                file.write(str(message))
+        except AttributeError:  # Картинки или файлы без описания
+            pass
 
 
 async def parser_stop():

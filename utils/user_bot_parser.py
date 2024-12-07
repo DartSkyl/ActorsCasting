@@ -209,6 +209,9 @@ async def parser_start():
             pass
         except UniqueViolationError:  # Проскачил уже имеющийся в базе
             pass
+        except AttributeError:  # Загадочные None сообщения
+            with open('print.log', 'a') as file:
+                file.write(str(message))
 
 
 async def parser_stop():

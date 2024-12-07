@@ -1,5 +1,6 @@
 import os
 import json
+from pydantic_core._pydantic_core import ValidationError
 from pyrogram import Client
 from pyrogram.types import Message
 from pyrogram.enums.message_media_type import MessageMediaType
@@ -74,7 +75,10 @@ class UserBotParser:
                 chat_id=origin_chat,
                 message_ids=origin_message
             )
-            await bot.send_message(chat_id=user_id, text=msg_text.text)
+            try:
+                await bot.send_message(chat_id=user_id, text=msg_text.text)
+            except ValidationError:
+                await bot.send_message(chat_id=user_id, text=msg_text.caption)
 
         except Exception as e:  # Проблема новых каналов\групп
             with open('print.log', 'a') as log_file:
@@ -85,7 +89,7 @@ class UserBotParser:
     async def check_text_for_prob(self, user_id, origin_chat, next_origin_message):
         """Этим методом проверяем есть ли текст проб в следующем сообщении в виде файла"""
         try:
-            prob_text = await self._client.get_messages(origin_chat, next_origin_message)
+            prob_text = await self._client.get_messages(chat_id=origin_chat, message_ids=next_origin_message)
             if prob_text.media == MessageMediaType.DOCUMENT:
                 techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(next_origin_message)})
                 await self._client.forward_messages(
@@ -128,7 +132,10 @@ async def parser_start():
     @app.on_message()
     async def my_handler(client: Client, message: Message):
         try:
-            casting_text = message.text.replace('\\', '')
+            try:
+                casting_text = message.text.replace('\\', '')
+            except AttributeError:
+                casting_text = message.caption.replace('\\', '')
             casting_data, casting_config, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
             if message.forward_from_chat:
                 chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
@@ -205,13 +212,13 @@ async def parser_start():
                         )
 
         except TypeError as e:  # Значит не кастинг или непредвиденная ошибка
-            print(e)
+            # print(e)
             pass
         except UniqueViolationError:  # Проскачил уже имеющийся в базе
             pass
-        except AttributeError:  # Загадочные None сообщения
-            with open('print.log', 'a') as file:
-                file.write(str(message))
+        # except AttributeError:  # Загадочные None сообщения
+        #     with open('print.log', 'a', encoding='utf-8') as file:
+        #         file.write(str(message))
 
 
 async def parser_stop():

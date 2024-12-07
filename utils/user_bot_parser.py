@@ -8,6 +8,8 @@ from pyrogram.errors.exceptions.not_acceptable_406 import ChatForwardsRestricted
 from aiogram.types.chat_member_member import ChatMemberMember
 from aiogram.types.chat_member_left import ChatMemberLeft
 
+from asyncpg.exceptions import UniqueViolationError
+
 from loader import techno_dict, bot, base
 from utils.ai_parser import get_casting_data
 from keyboards.inline_actors import button_for_casting
@@ -131,12 +133,14 @@ async def parser_start():
                 chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
             else:
                 chat_id, message_id = message.chat.id, message.id
+
             await base.add_new_casting(
                 casting_hash=casting_hash,
-                casting_data=json.dumps(casting_data),
-                casting_config=json.dumps(casting_config),
+                casting_data=json.dumps(casting_data).replace('\\', '\\\\'),
+                casting_config=json.dumps(casting_config).replace('\\', '\\\\'),
                 casting_origin='_'.join([str(chat_id), str(message_id)])
             )
+
             # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
             all_actors = await base.get_all_actors()
             for actor in all_actors:
@@ -156,13 +160,16 @@ async def parser_start():
                                     a = [int(i) for i in actor['playing_age'].split('-')]
                                     a.sort()
                                     # Возрастной диапазон для роли
-                                    b = [int(i) for i in role['age_restrictions'].split('-')]
-                                    b.sort()
                                     try:
+                                        b = [int(i) for i in role['age_restrictions'].split('-')]
+                                        b.sort()
                                         if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
                                             role_list.append(casting_data['role_description'][role_index - 1])
-                                    except Exception:
-                                        role_list.append(casting_data['role_description'][role_index - 1])
+                                    except ValueError:
+                                        if '+' in role['age_restrictions']:  # Если возрастные требования в формате n+
+                                            b = role['age_restrictions'].split('+')
+                                            if int(b[0]) <= a[1]:
+                                                role_list.append(casting_data['role_description'][role_index - 1])
 
                     if len(role_list) > 0:
                         msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
@@ -194,6 +201,8 @@ async def parser_start():
 
         except TypeError as e:  # Значит не кастинг или непредвиденная ошибка
             print(e)
+            pass
+        except UniqueViolationError:  # Проскачил уже имеющийся в базе
             pass
 
 

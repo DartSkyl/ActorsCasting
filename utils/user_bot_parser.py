@@ -128,7 +128,8 @@ async def parser_start():
     @app.on_message()
     async def my_handler(client: Client, message: Message):
         try:
-            casting_data, casting_config, casting_hash = await get_casting_data(message.text)  # Возвращается кортеж
+            casting_text = message.text.replace('\\', '')
+            casting_data, casting_config, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
             if message.forward_from_chat:
                 chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
             else:
@@ -136,8 +137,8 @@ async def parser_start():
 
             await base.add_new_casting(
                 casting_hash=casting_hash,
-                casting_data=json.dumps(casting_data).replace('\\', ''),
-                casting_config=json.dumps(casting_config).replace('\\', ''),
+                casting_data=json.dumps(casting_data),
+                casting_config=json.dumps(casting_config),
                 casting_origin='_'.join([str(chat_id), str(message_id)])
             )
 

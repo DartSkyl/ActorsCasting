@@ -117,6 +117,4 @@ async def get_casting_data(casting_msg: str):
         else:
             return False
     else:
-        with open('drop_messages.log', 'a') as log_file:
-            log_file.write(f'\n=================================\n\n{casting_msg}\n=================================\n\n')
         return False

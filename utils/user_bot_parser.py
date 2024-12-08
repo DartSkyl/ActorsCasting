@@ -9,7 +9,7 @@ from pyrogram.errors.exceptions.not_acceptable_406 import ChatForwardsRestricted
 from aiogram.types.chat_member_member import ChatMemberMember
 from aiogram.types.chat_member_left import ChatMemberLeft
 
-from asyncpg.exceptions import UniqueViolationError
+from asyncpg.exceptions import UniqueViolationError, PostgresSyntaxError
 
 from loader import techno_dict, bot, base
 from utils.ai_parser import get_casting_data
@@ -133,21 +133,25 @@ async def parser_start():
     async def my_handler(client: Client, message: Message):
         try:
             try:
-                casting_text = message.text.replace('\\', '')
+                casting_text = message.text.replace('\\', ' ')
             except AttributeError:  # Если картинка с описанием
-                casting_text = message.caption.replace('\\', '')
+                casting_text = message.caption.replace('\\', ' ')
             casting_data, casting_config, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
             if message.forward_from_chat:
                 chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
             else:
                 chat_id, message_id = message.chat.id, message.id
+            try:
+                await base.add_new_casting(
+                    casting_hash=casting_hash,
+                    casting_data=json.dumps(casting_data),
+                    casting_config=json.dumps(casting_config),
+                    casting_origin='_'.join([str(chat_id), str(message_id)])
+                )
+            except PostgresSyntaxError:
+                with open('print.log', 'a', encoding='utf-8') as file:
+                    file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n==================\n\n')
 
-            await base.add_new_casting(
-                casting_hash=casting_hash,
-                casting_data=json.dumps(casting_data),
-                casting_config=json.dumps(casting_config),
-                casting_origin='_'.join([str(chat_id), str(message_id)])
-            )
 
             # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
             all_actors = await base.get_all_actors()

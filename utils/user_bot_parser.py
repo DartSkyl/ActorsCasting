@@ -148,72 +148,75 @@ async def parser_start():
                     casting_config=json.dumps(casting_config),
                     casting_origin='_'.join([str(chat_id), str(message_id)])
                 )
+            # except PostgresSyntaxError:
+            #     with open('print.log', 'a', encoding='utf-8') as file:
+            #         file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n==================\n\n')
+
+
+                # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
+                all_actors = await base.get_all_actors()
+                for actor in all_actors:
+                    if await check_paid(actor['user_id']):
+                        role_index = 0  # Индекс роли, для списка из casting_data
+                        role_list = []  # Формируем список из подходящих ролей
+                        for role in casting_config:
+                            role_index += 1
+                            # Сначала проверяем пол актера
+                            if actor['sex'] == role['actor_sex']:
+                                # Проверяем, подходит ли проект актеру
+                                if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
+                                    # Проверяем, подходит ли тип роли
+                                    if role['role_type'] in actor['roles_type_interest'].split('+') or role['role_type'] == 'Unspecified':
+                                        # Проверяем возраст актера
+                                        # Игровой диапазон актера
+                                        a = [int(i) for i in actor['playing_age'].split('-')]
+                                        a.sort()
+                                        # Возрастной диапазон для роли
+                                        try:
+                                            b = [int(i) for i in role['age_restrictions'].split('-')]
+                                            b.sort()
+                                            if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
+                                                role_list.append(casting_data['role_description'][role_index - 1])
+                                        except ValueError:
+                                            if '+' in role['age_restrictions']:  # Если возрастные требования в формате n+
+                                                b = role['age_restrictions'].split('+')
+                                                if int(b[0]) <= a[1]:
+                                                    role_list.append(casting_data['role_description'][role_index - 1])
+                                        except IndexError:
+                                            b = [int(i) for i in role['age_restrictions'].split('-')]
+                                            if int(b[0]) <= a[1]:
+                                                role_list.append(casting_data['role_description'][role_index - 1])
+
+                        if len(role_list) > 0:
+                            msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
+                                        f'<b>Место проведения кастинга:</b> {casting_data["search_city"]}\n'
+                                        f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
+                                        f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
+                                        f'<b>Место съемок:</b> {casting_data["filming_location"]}\n\n')
+                            for role_info in role_list:
+                                additional_requirements = role_info["additional_requirements"] if role_info.get(
+                                    'additional_requirements') else 'Не указан'
+                                fee = role_info["fee"] if role_info.get('fee') else 'Не указан'
+                                msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
+                                             f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
+                                             f'<b>Название роли:</b> {role_info["role_name"]}\n'
+                                             f'<b>Тип роли:</b> {role_info["role_type"]}\n'
+                                             f'<b>Описание роли:</b> {role_info["role_description"]}\n'
+                                             f'<b>Дополнительные требования:</b> {additional_requirements}\n'
+                                             f'<b>Гонорар:</b> {fee}\n\n')
+
+                            await bot.send_message(
+                                chat_id=actor['user_id'],
+                                text=msg_text,
+                                reply_markup=await button_for_casting(
+                                    chat_id=chat_id,
+                                    message_id=message_id,
+                                    casting_hash=casting_hash
+                                )
+                            )
             except PostgresSyntaxError:
                 with open('print.log', 'a', encoding='utf-8') as file:
                     file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n==================\n\n')
-
-
-            # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
-            all_actors = await base.get_all_actors()
-            for actor in all_actors:
-                if await check_paid(actor['user_id']):
-                    role_index = 0  # Индекс роли, для списка из casting_data
-                    role_list = []  # Формируем список из подходящих ролей
-                    for role in casting_config:
-                        role_index += 1
-                        # Сначала проверяем пол актера
-                        if actor['sex'] == role['actor_sex']:
-                            # Проверяем, подходит ли проект актеру
-                            if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
-                                # Проверяем, подходит ли тип роли
-                                if role['role_type'] in actor['roles_type_interest'].split('+') or role['role_type'] == 'Unspecified':
-                                    # Проверяем возраст актера
-                                    # Игровой диапазон актера
-                                    a = [int(i) for i in actor['playing_age'].split('-')]
-                                    a.sort()
-                                    # Возрастной диапазон для роли
-                                    try:
-                                        b = [int(i) for i in role['age_restrictions'].split('-')]
-                                        b.sort()
-                                        if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
-                                            role_list.append(casting_data['role_description'][role_index - 1])
-                                    except ValueError:
-                                        if '+' in role['age_restrictions']:  # Если возрастные требования в формате n+
-                                            b = role['age_restrictions'].split('+')
-                                            if int(b[0]) <= a[1]:
-                                                role_list.append(casting_data['role_description'][role_index - 1])
-                                    except IndexError:
-                                        b = [int(i) for i in role['age_restrictions'].split('-')]
-                                        if int(b[0]) <= a[1]:
-                                            role_list.append(casting_data['role_description'][role_index - 1])
-
-                    if len(role_list) > 0:
-                        msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
-                                    f'<b>Место проведения кастинга:</b> {casting_data["search_city"]}\n'
-                                    f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
-                                    f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
-                                    f'<b>Место съемок:</b> {casting_data["filming_location"]}\n\n')
-                        for role_info in role_list:
-                            additional_requirements = role_info["additional_requirements"] if role_info.get(
-                                'additional_requirements') else 'Не указан'
-                            fee = role_info["fee"] if role_info.get('fee') else 'Не указан'
-                            msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
-                                         f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
-                                         f'<b>Название роли:</b> {role_info["role_name"]}\n'
-                                         f'<b>Тип роли:</b> {role_info["role_type"]}\n'
-                                         f'<b>Описание роли:</b> {role_info["role_description"]}\n'
-                                         f'<b>Дополнительные требования:</b> {additional_requirements}\n'
-                                         f'<b>Гонорар:</b> {fee}\n\n')
-
-                        await bot.send_message(
-                            chat_id=actor['user_id'],
-                            text=msg_text,
-                            reply_markup=await button_for_casting(
-                                chat_id=chat_id,
-                                message_id=message_id,
-                                casting_hash=casting_hash
-                            )
-                        )
 
         except TypeError as e:  # Значит не кастинг или непредвиденная ошибка
             # print(e)
@@ -222,6 +225,7 @@ async def parser_start():
             pass
         except AttributeError:  # Картинки или файлы без описания
             pass
+
 
 
 async def parser_stop():

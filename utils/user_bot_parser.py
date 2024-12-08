@@ -214,9 +214,9 @@ async def parser_start():
                                     casting_hash=casting_hash
                                 )
                             )
-            except PostgresSyntaxError:
+            except PostgresSyntaxError as e:
                 with open('print.log', 'a', encoding='utf-8') as file:
-                    file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n==================\n\n')
+                    file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n{str(e)}\n==================\n\n')
 
         except TypeError as e:  # Значит не кастинг или непредвиденная ошибка
             # print(e)

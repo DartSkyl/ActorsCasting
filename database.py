@@ -40,7 +40,7 @@ class BotBase:
                                      "agent_contact VARCHAR(155),"
                                      "have_experience TEXT,"
                                      "projects_interest TEXT,"
-                                     "roles_type_interest TEXT,"
+                                     "fee INT,"
                                      "geo_location TEXT,"
                                      "portfolio TEXT,"
                                      "social TEXT,"
@@ -59,16 +59,16 @@ class BotBase:
     # ====================
 
     async def registry_new_actor(self, user_id, actor_name, passport_age, playing_age, education, sex, contacts,
-                                 agent_contact, have_experience, roles_type_interest, geo_location, portfolio, social,
+                                 agent_contact, have_experience, fee, geo_location, portfolio, social,
                                  projects_interest):
         """Сохраняем нового актера в БД"""
         async with self.pool.acquire() as connection:
             await connection.execute(f"INSERT INTO public.all_actors"
                                      f"(user_id, actor_name, passport_age, playing_age, education, sex, contacts,"
-                                     f"agent_contact, have_experience, roles_type_interest, geo_location, portfolio,"
+                                     f"agent_contact, have_experience, fee, geo_location, portfolio,"
                                      f"social, projects_interest) VALUES ({user_id}, '{actor_name}', {passport_age}, "
                                      f"'{playing_age}', '{education}', '{sex}', '{contacts}',"
-                                     f"'{agent_contact}', '{have_experience}', '{roles_type_interest}', "
+                                     f"'{agent_contact}', '{have_experience}', {fee}, "
                                      f"'{geo_location}', '{portfolio}', '{social}', '{projects_interest}')")
 
     async def get_users_id(self):

@@ -21,15 +21,15 @@ experience_choice = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 role_interested = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Кастинги в кино', callback_data='choice_p_films')],
-    [InlineKeyboardButton(text='Кастинги в сериал', callback_data='choice_p_series')],
-    [InlineKeyboardButton(text='Кастинги в рекламу', callback_data='choice_p_ads')],
-    [InlineKeyboardButton(text='Театральные проекты', callback_data='choice_p_theater')],
-    [InlineKeyboardButton(text='Некоммерческие проекты / фестивальные короткометражные фильмы молодых режиссёров',
-                          callback_data='choice_p_free')],
-    [InlineKeyboardButton(text='Главные и второстепенные роли', callback_data='choice_r_main_role')],
-    [InlineKeyboardButton(text='Эпизоды', callback_data='choice_r_episode')],
-    [InlineKeyboardButton(text='Групповка/массовка', callback_data='choice_r_mass')],
+    [InlineKeyboardButton(text='Кастинги в кино', callback_data='choice_films')],
+    # [InlineKeyboardButton(text='Кастинги в сериал', callback_data='choice_p_series')],
+    [InlineKeyboardButton(text='Кастинги в рекламу', callback_data='choice_ads')],
+    # [InlineKeyboardButton(text='Театральные проекты', callback_data='choice_p_theater')],
+    [InlineKeyboardButton(text='Некоммерческие проекты',
+                          callback_data='choice_free')],
+    # [InlineKeyboardButton(text='Главные и второстепенные роли', callback_data='choice_r_main_role')],
+    # [InlineKeyboardButton(text='Эпизоды', callback_data='choice_r_episode')],
+    # [InlineKeyboardButton(text='Групповка/массовка', callback_data='choice_r_mass')],
     [InlineKeyboardButton(text='Готово', callback_data='ready')]
 ])
 
@@ -41,10 +41,10 @@ editor_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить образование', callback_data='edit_education')],
     [InlineKeyboardButton(text='Изменить город проживания', callback_data='edit_geo_location')],
     [InlineKeyboardButton(text='Изменить контактные данные', callback_data='edit_contacts')],
-    # [InlineKeyboardButton(text='Изменить контактные данные агента', callback_data='edit_agent_contact')],
     [InlineKeyboardButton(text='Изменить опыт', callback_data='edit_have_experience')],
     [InlineKeyboardButton(text='Изменить портфолио', callback_data='edit_portfolio')],
     [InlineKeyboardButton(text='Изменить соц. сети', callback_data='edit_social')],
+    [InlineKeyboardButton(text='Изменить гонорар', callback_data='edit_fee')],
     [InlineKeyboardButton(text='Изменить то, что интересует', callback_data='edit_roles_type_interest')],
 ])
 
@@ -54,10 +54,10 @@ setup_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить образование', callback_data='setup_education')],
     [InlineKeyboardButton(text='Изменить город проживания', callback_data='setup_geo_location')],
     [InlineKeyboardButton(text='Изменить контактные данные', callback_data='setup_contacts')],
-    # [InlineKeyboardButton(text='Изменить контактные данные агента', callback_data='setup_agent_contact')],
     [InlineKeyboardButton(text='Изменить опыт', callback_data='setup_have_experience')],
     [InlineKeyboardButton(text='Изменить портфолио', callback_data='setup_portfolio')],
     [InlineKeyboardButton(text='Изменить соц. сети', callback_data='setup_social')],
+    [InlineKeyboardButton(text='Изменить гонорар', callback_data='setup_fee')],
     [InlineKeyboardButton(text='Изменить то, что интересует', callback_data='setup_roles_type_interest')],
 ])
 

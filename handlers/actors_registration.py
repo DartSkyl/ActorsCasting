@@ -109,14 +109,6 @@ async def contacts_saver(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.have_experience)
 
 
-# @users_router.message(ActorsState.agent_contact)
-# async def agent_contacts_saver(msg: Message, state: FSMContext):
-#     """Сохраняем контактные данные агента если есть и переходим к следующему вопросу"""
-#     await state.update_data({'agent_contact': msg.text if msg.text != 'Пропустить' else 'empty'})
-#     await msg.answer('Есть ли опыт в съемках?', reply_markup=experience_choice)
-#     await state.set_state(ActorsState.have_experience)
-
-
 @users_router.callback_query(ActorsState.have_experience)
 async def experience_saver(callback: CallbackQuery, state: FSMContext):
     """Сохраняем опыт и переходим к следующему вопросу"""
@@ -138,10 +130,24 @@ async def portfolio_saver(msg: Message, state: FSMContext):
 @users_router.message(ActorsState.social)
 async def social_saver(msg: Message, state: FSMContext):
     """Сохраняем соц. сети и переходим к следующему вопросу"""
-    await state.update_data({'social': msg.text, 'roles_type_interest': [], 'projects_interest': []})  # Пустой список нужен дальше
-    await msg.answer('Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов):',
-                     reply_markup=role_interested)
-    await state.set_state(ActorsState.roles_type_interest)
+    await state.update_data({'social': msg.text})
+    await msg.answer('Укажите минимальный гонорар в рублях:\nЦифры по рынку:\n'
+                     '– Гонорар актёров массовых и групповых сцен обычно от 1.500₽ до 5.000₽\n'
+                     '– Гонорар за эпизодическую роль от 7.000₽ до 30.000₽\n'
+                     '– Гонорар за съемку в рекламе от 25.000₽ до 300.000')
+    await state.set_state(ActorsState.fee)
+
+
+@users_router.message(ActorsState.fee)
+async def fee_saver(msg: Message, state: FSMContext):
+    """Сохраняем гонорар и переходим к следующему вопросу"""
+    try:
+        await state.update_data({'fee': int(msg.text), 'projects_interest': []})  # Пустой список нужен дальше
+        await msg.answer('Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов):',
+                         reply_markup=role_interested)
+        await state.set_state(ActorsState.roles_type_interest)
+    except ValueError:
+        await msg.answer('Нужно ввести целое число! Повторите!')
 
 
 # Словарь со значениями для формирования сообщений
@@ -177,31 +183,20 @@ async def roles_type_saver(callback: CallbackQuery, state: FSMContext):
 
     msg_text = 'Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов)\nУже выбрано:\n\n'
 
-    roles_type_interest: list = (await state.get_data())['roles_type_interest']
     projects_interest: list = (await state.get_data())['projects_interest']
-    if callback.data.startswith('choice_r'):
-        roles_type_choice = callback.data.replace('choice_r_', '')
 
-        if roles_type_choice not in roles_type_interest:
-            roles_type_interest.append(roles_type_choice)
-        else:
-            roles_type_interest.remove(roles_type_choice)
+    projects_choice = callback.data.replace('choice_', '')
 
+    if projects_choice not in projects_interest:
+        projects_interest.append(projects_choice)
     else:
-        projects_choice = callback.data.replace('choice_p_', '')
+        projects_interest.remove(projects_choice)
 
-        if projects_choice not in projects_interest:
-            projects_interest.append(projects_choice)
-        else:
-            projects_interest.remove(projects_choice)
-
-    for elem in roles_type_interest:
-        msg_text += dict_for_msg_build[elem] + '\n'
     for elem in projects_interest:
         msg_text += dict_for_msg_build[elem] + '\n'
 
     msg_text += '\nНажмите повторно что бы убрать выбранное\nНажмите "Готово" что бы продолжить'
-    await state.update_data({'roles_type_interest': roles_type_interest, 'projects_interest': projects_interest})
+    await state.update_data({'projects_interest': projects_interest})
     await callback.message.edit_text(msg_text, reply_markup=role_interested)
 
 
@@ -218,12 +213,11 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
                 f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
                 f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
-                # f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
-                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}'
-                f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
+                f'<b>Минимальный гонорар:</b> {actor_data["fee"]}\n'
+                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
     await callback.message.answer(msg_text, reply_markup=editor_keyboard)
     await callback.message.answer('Если все верно нажмите "Зарегистрироваться"', reply_markup=registry_button)
     await state.set_state(ActorsState.preview)
@@ -232,7 +226,7 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
 async def review_all_data_after_edit(msg: Message, state: FSMContext):
     """Выводим все введенные данные и даем возможность исправить"""
     actor_data = await state.get_data()
-    msg_text = (f'Проверь правильность введенных данных:</b>\n\n'
+    msg_text = (f'Проверь правильность введенных данных:\n\n'
                 f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
                 f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
                 f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
@@ -240,12 +234,11 @@ async def review_all_data_after_edit(msg: Message, state: FSMContext):
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
                 f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
                 f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
-                # f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
-                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"]])}'
-                f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
+                f'<b>Минимальный гонорар:</b> {actor_data["fee"]}\n'
+                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
     await msg.answer(msg_text, reply_markup=editor_keyboard)
     await msg.answer('Если все верно нажмите "Зарегистрироваться"', reply_markup=registry_button)
     await state.set_state(ActorsState.preview)
@@ -265,7 +258,7 @@ async def registry_new_actor(msg: Message, state: FSMContext):
         contacts=actor_data['contacts'],
         agent_contact=actor_data['agent_contact'],
         have_experience=actor_data['have_experience'],
-        roles_type_interest='+'.join(actor_data['roles_type_interest']),
+        fee=actor_data['fee'],
         geo_location=actor_data['geo_location'],
         portfolio=actor_data['portfolio'],
         social=actor_data['social'],
@@ -309,6 +302,7 @@ async def start_edit_data(callback: CallbackQuery, state: FSMContext):
         'edit_have_experience': (ActorsState.edit_have_experience, 'Какой у вас опыт?', experience_choice),
         'edit_portfolio': (ActorsState.edit_portfolio, 'Введите ссылку на ваше портфолио', None),
         'edit_social': (ActorsState.edit_social, 'Введите ссылку на страницу в соц. сети', None),
+        'edit_fee': (ActorsState.edit_fee, 'Укажите минимальный гонорар в рублях:', None),
         'edit_roles_type_interest': (ActorsState.edit_roles_type_interest, 'Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов):', role_interested),
     }
 
@@ -366,6 +360,18 @@ async def edit_contacts_func(msg: Message, state: FSMContext):
     await msg.answer('Изменения сохранены')
     await state.set_state(ActorsState.preview)
     await review_all_data_after_edit(msg, state)
+
+
+@users_router.message(ActorsState.edit_fee)
+async def edit_contacts_func(msg: Message, state: FSMContext):
+    """Сохраняем изменения контактные данные"""
+    try:
+        await state.update_data({'fee': int(msg.text)})
+        await msg.answer('Изменения сохранены')
+        await state.set_state(ActorsState.preview)
+        await review_all_data_after_edit(msg, state)
+    except ValueError:
+        await msg.answer('Нужно ввести целое число! Повторите!')
 
 
 @users_router.message(ActorsState.edit_agent_contact)
@@ -432,31 +438,20 @@ async def edit_roles_type_interest_func(callback: CallbackQuery, state: FSMConte
     if callback.data != 'ready':
         msg_text = 'Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов)\nУже выбрано:\n\n'
 
-        roles_type_interest: list = (await state.get_data())['roles_type_interest']
         projects_interest: list = (await state.get_data())['projects_interest']
-        if callback.data.startswith('choice_r'):
-            roles_type_choice = callback.data.replace('choice_r_', '')
 
-            if roles_type_choice not in roles_type_interest:
-                roles_type_interest.append(roles_type_choice)
-            else:
-                roles_type_interest.remove(roles_type_choice)
+        projects_choice = callback.data.replace('choice_', '')
 
+        if projects_choice not in projects_interest:
+            projects_interest.append(projects_choice)
         else:
-            projects_choice = callback.data.replace('choice_p_', '')
+            projects_interest.remove(projects_choice)
 
-            if projects_choice not in projects_interest:
-                projects_interest.append(projects_choice)
-            else:
-                projects_interest.remove(projects_choice)
-
-        for elem in roles_type_interest:
-            msg_text += dict_for_msg_build[elem] + '\n'
         for elem in projects_interest:
             msg_text += dict_for_msg_build[elem] + '\n'
 
         msg_text += '\nНажмите повторно что бы убрать выбранное\nНажмите "Готово" что бы продолжить'
-        await state.update_data({'roles_type_interest': roles_type_interest, 'projects_interest': projects_interest})
+        await state.update_data({'projects_interest': projects_interest})
         await callback.message.edit_text(msg_text, reply_markup=role_interested)
     else:
         await state.set_state(ActorsState.preview)

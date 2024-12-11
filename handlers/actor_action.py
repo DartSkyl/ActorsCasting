@@ -218,16 +218,11 @@ async def open_acc_setup_menu(msg: Message, state: FSMContext):
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
                 f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
                 f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
-                # f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
-                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"].split("+")])}'
-                f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
-    await state.set_data({
-        'roles_type_interest': actor_data["roles_type_interest"].split("+"),
-        'projects_interest': actor_data["projects_interest"].split("+")
-    })
+                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
+    await state.set_data({'projects_interest': actor_data["projects_interest"].split("+")})
     await msg.answer(msg_text, reply_markup=setup_keyboard)
 
 
@@ -246,6 +241,7 @@ async def start_acc_setup(callback: CallbackQuery, state: FSMContext):
         'setup_have_experience': (ActorsState.have_experience_setup, 'Какой у вас опыт?', experience_choice),
         'setup_portfolio': (ActorsState.portfolio_setup, 'Введите ссылку на ваше портфолио', None),
         'setup_social': (ActorsState.social_setup, 'Введите ссылку на страницу в соц. сети', None),
+        'setup_fee': (ActorsState.fee_setup, 'Укажите минимальный гонорар в рублях:', None),
         'setup_roles_type_interest': (ActorsState.roles_type_interest_setup,
                                       'Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов):',
                                       role_interested),
@@ -267,12 +263,10 @@ async def review_all_data_after_setup(callback: CallbackQuery, state: FSMContext
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
                 f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
                 f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
-                # f'<b>Контактные данные агента:</b> {actor_data["agent_contact"] if actor_data["agent_contact"] != "empty" else "Отсутствует"}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
-                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["roles_type_interest"].split("+")])}'
-                f', {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
+                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
     await callback.message.answer(msg_text, reply_markup=setup_keyboard)
 
 
@@ -345,6 +339,18 @@ async def setup_social_func(msg: Message, state: FSMContext):
     await open_acc_setup_menu(msg, state)
 
 
+@users_router.message(ActorsState.fee_setup)
+async def setup_social_func(msg: Message, state: FSMContext):
+    """Сохраняем изменения гонорар"""
+    try:
+        await base.setup_param('fee', int(msg.text), msg.from_user.id)
+        await msg.answer('Изменения сохранены')
+        await state.clear()
+        await open_acc_setup_menu(msg, state)
+    except ValueError:
+        await msg.answer('Нужно ввести целое число! Повторите!')
+
+
 @users_router.callback_query(ActorsState.education_setup)
 async def setup_education_func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения образование"""
@@ -372,36 +378,23 @@ async def setup_roles_type_interest_func(callback: CallbackQuery, state: FSMCont
     if callback.data != 'ready':
         msg_text = 'Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов)\nУже выбрано:\n\n'
 
-        roles_type_interest: list = (await state.get_data())['roles_type_interest']
         projects_interest: list = (await state.get_data())['projects_interest']
-        if callback.data.startswith('choice_r'):
-            roles_type_choice = callback.data.replace('choice_r_', '')
 
-            if roles_type_choice not in roles_type_interest:
-                roles_type_interest.append(roles_type_choice)
-            else:
-                roles_type_interest.remove(roles_type_choice)
+        projects_choice = callback.data.replace('choice_', '')
 
+        if projects_choice not in projects_interest:
+            projects_interest.append(projects_choice)
         else:
-            projects_choice = callback.data.replace('choice_p_', '')
+            projects_interest.remove(projects_choice)
 
-            if projects_choice not in projects_interest:
-                projects_interest.append(projects_choice)
-            else:
-                projects_interest.remove(projects_choice)
-
-        for elem in roles_type_interest:
-            msg_text += dict_for_msg_build[elem] + '\n'
         for elem in projects_interest:
             msg_text += dict_for_msg_build[elem] + '\n'
 
         msg_text += '\nНажмите повторно что бы убрать выбранное\nНажмите "Готово" что бы продолжить'
-        await state.update_data({'roles_type_interest': roles_type_interest, 'projects_interest': projects_interest})
+        await state.update_data({'projects_interest': projects_interest})
         await callback.message.edit_text(msg_text, reply_markup=role_interested)
     else:
-        roles_type_interest: list = (await state.get_data())['roles_type_interest']
         projects_interest: list = (await state.get_data())['projects_interest']
-        await base.setup_param('roles_type_interest', '+'.join(roles_type_interest), callback.from_user.id)
         await base.setup_param('projects_interest', '+'.join(projects_interest), callback.from_user.id)
         await state.clear()
         await review_all_data_after_setup(callback, state)

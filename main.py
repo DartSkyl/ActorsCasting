@@ -26,8 +26,8 @@ async def start_up():
         BotCommand(command='start', description='Главное меню и рестарт'),
         BotCommand(command='support', description='Контакт службы поддержки')
     ])
-    with open('bot.log', 'a') as log_file:
-        log_file.write(f'\n========== New bot session {datetime.datetime.now()} ==========\n\n')
+    # with open('bot.log', 'a') as log_file:
+    #     log_file.write(f'\n========== New bot session {datetime.datetime.now()} ==========\n\n')
     print('Стартуем')
     await dp.start_polling(bot)
 

@@ -1,5 +1,5 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton, InlineKeyboardMarkup
-from config import PAYWALL_URL
+from config import PAYWALL_URL, PUBLIC_LINK
 
 
 sex_choice = InlineKeyboardMarkup(inline_keyboard=[
@@ -62,16 +62,16 @@ setup_keyboard = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 
-async def button_for_casting(chat_id, message_id, casting_hash=None, casting_hash_rm=None):
+async def button_for_casting(message_id, casting_hash=None, casting_hash_rm=None):
     """Клавиатура формирует кнопку для предоставления оригинала сообщения о кастинге"""
     if casting_hash:
         buttons = [
-            [InlineKeyboardButton(text='Показать оригинал', callback_data=f'origin_{chat_id}_{message_id}')],
+            [InlineKeyboardButton(text='Показать оригинал', url=f'https://t.me/c/{PUBLIC_LINK}/{message_id}')],
             [InlineKeyboardButton(text='Добавить в избранное', callback_data=f'favorites_{casting_hash}')]
         ]
     else:
         buttons = [
-            [InlineKeyboardButton(text='Показать оригинал', callback_data=f'origin_{chat_id}_{message_id}')],
+            [InlineKeyboardButton(text='Показать оригинал', url=f'https://t.me/c/{PUBLIC_LINK}/{message_id}')],
             [InlineKeyboardButton(text='Удалить из избранного', callback_data=f'rm_favorites_{casting_hash_rm}')]
         ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)

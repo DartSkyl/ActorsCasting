@@ -19,29 +19,29 @@ from keyboards.inline_actors import (setup_keyboard, education_choice, paid_url,
                                      experience_choice, role_interested, button_for_casting)
 
 
-@dp.message(F.forward_origin)
-async def for_forward_message(msg: Message):
-    """Дле перебрасывания сообщений, сам ты извращенец!"""
-    if msg.from_user.id == techno_dict['parser_id']:
-        user_for_drop = None
-        for user in techno_dict['forwarding']:
-            # У каждого элемента списка словарь с одним ключем и одним значением и что бы их извлечь делаем так:
-            for user_id, user_request in user.items():
-                user_request = [int(i) for i in user_request.split('_')]
-                # Теперь проверяем, что бы переброшенное сообщение соответствовало запросу пользователя
-                try:
-                    if msg.forward_origin.message_id == user_request[1] and msg.forward_origin.chat.id == user_request[0]:
-                        await msg.forward(user_id)
-                        user_for_drop = user
-                        break
-                except AttributeError:  # Если пересылка из чата, то тут мы никак не проверим
-                    await msg.forward(user_id)
-                    user_for_drop = user
-                    break
-
-            techno_dict['forwarding'].remove(user_for_drop)
-    else:
-        await msg.answer('Нельзя пересылать боту сообщения!')
+# @dp.message(F.forward_origin)
+# async def for_forward_message(msg: Message):
+#     """Дле перебрасывания сообщений, сам ты извращенец!"""
+#     if msg.from_user.id == techno_dict['parser_id']:
+#         user_for_drop = None
+#         for user in techno_dict['forwarding']:
+#             # У каждого элемента списка словарь с одним ключем и одним значением и что бы их извлечь делаем так:
+#             for user_id, user_request in user.items():
+#                 user_request = [int(i) for i in user_request.split('_')]
+#                 # Теперь проверяем, что бы переброшенное сообщение соответствовало запросу пользователя
+#                 try:
+#                     if msg.forward_origin.message_id == user_request[1] and msg.forward_origin.chat.id == user_request[0]:
+#                         await msg.forward(user_id)
+#                         user_for_drop = user
+#                         break
+#                 except AttributeError:  # Если пересылка из чата, то тут мы никак не проверим
+#                     await msg.forward(user_id)
+#                     user_for_drop = user
+#                     break
+#
+#             techno_dict['forwarding'].remove(user_for_drop)
+#     else:
+#         await msg.answer('Нельзя пересылать боту сообщения!')
 
 
 @users_router.callback_query(F.data.startswith('origin_'))
@@ -206,24 +206,26 @@ dict_for_msg_build = {
     }
 
 
+@users_router.message(Command('settings'))
 @users_router.message(F.text == 'Настройки профиля')
 async def open_acc_setup_menu(msg: Message, state: FSMContext):
     """Открываем меню настройки профиля"""
-    actor_data = (await base.get_actor_info(msg.from_user.id))[0]
-    msg_text = (f'Текущие настройки профиля:\n\n'
-                f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
-                f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
-                f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
-                f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
-                f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
-                f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
-                f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
-                f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
-                f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
-                f'<b>Соц. сети:</b> {actor_data["social"]}\n'
-                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
-    await state.set_data({'projects_interest': actor_data["projects_interest"].split("+")})
-    await msg.answer(msg_text, reply_markup=setup_keyboard)
+    if msg.from_user.id in await base.get_users_id():
+        actor_data = (await base.get_actor_info(msg.from_user.id))[0]
+        msg_text = (f'Текущие настройки профиля:\n\n'
+                    f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
+                    f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
+                    f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
+                    f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
+                    f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
+                    f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
+                    f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
+                    f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
+                    f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
+                    f'<b>Соц. сети:</b> {actor_data["social"]}\n'
+                    f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
+        await state.set_data({'projects_interest': actor_data["projects_interest"].split("+")})
+        await msg.answer(msg_text, reply_markup=setup_keyboard)
 
 
 @users_router.callback_query(F.data.startswith('setup_'))

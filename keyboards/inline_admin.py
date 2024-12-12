@@ -29,12 +29,12 @@ async def button_for_casting_admin(origin, casting_hash, viewing=False):
     if not viewing:
         buttons = [
             [InlineKeyboardButton(text='Подробнее', callback_data=f'view_{casting_hash}')],
-            [InlineKeyboardButton(text='Показать оригинал', callback_data=f'origin_{origin}')],
+            [InlineKeyboardButton(text='Показать оригинал', url=origin)],
             [InlineKeyboardButton(text='Удалить', callback_data=f'rm_admin_{casting_hash}')]
         ]
     else:
         buttons = [
-            [InlineKeyboardButton(text='Показать оригинал', callback_data=f'origin_{origin}')],
+            [InlineKeyboardButton(text='Показать оригинал', url=origin)],
             [InlineKeyboardButton(text='Удалить', callback_data=f'rm_admin_{casting_hash}')]
         ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)

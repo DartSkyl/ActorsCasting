@@ -8,13 +8,14 @@ from pyrogram.errors.exceptions.not_acceptable_406 import ChatForwardsRestricted
 
 from aiogram.types.chat_member_member import ChatMemberMember
 from aiogram.types.chat_member_left import ChatMemberLeft
+from aiogram.types import FSInputFile
 
 from asyncpg.exceptions import UniqueViolationError, PostgresSyntaxError
 
 from loader import techno_dict, bot, base
 from utils.ai_parser import get_casting_data
 from keyboards.inline_actors import button_for_casting
-from config import CONTROL_GROUP
+from config import CONTROL_GROUP, PUBLIC_CHANNEL, PUBLIC_LINK
 
 
 class UserBotParser:
@@ -121,6 +122,29 @@ async def parser_load():
         print('Юзер бот не подключен')
 
 
+async def for_tests(casting_data, casting_config, casting_contacts, casting_rights):
+    msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
+                f'<b>Даты съемок:</b> {casting_data["filming_dates"]}\n'
+                f'<b>Тип проекта:</b> {casting_data["project_type"]}\n\n')
+
+    for role_info in casting_data['role_description']:
+        additional_requirements = role_info["additional_requirements"] if role_info.get(
+            'additional_requirements') else 'Не указан'
+        msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
+                     f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
+                     f'<b>Название роли:</b> {role_info["role_name"]}\n'
+                     f'<b>Описание роли:</b> {role_info["role_description"]}\n'
+                     f'<b>Дополнительные требования:</b> {additional_requirements}\n'
+                     f'<b>Гонорар:</b> {role_info["fee"]}\n\n')
+    msg_text += (f'<b>Заявки отправлять:</b> {casting_contacts["contacts"]}\n'
+                 f'<b>Правила оформления заявок:</b> {casting_contacts["rules"]}\n')
+
+    if casting_rights:
+        msg_text += f'<b>Права:</b> {casting_rights["rights"]}\n'
+    print(casting_config)
+    await bot.send_message(chat_id=1004280953, text=msg_text)
+
+
 async def parser_start():
     """Запускаем паресер"""
     app = await techno_dict['parser'].create_app()
@@ -131,28 +155,34 @@ async def parser_start():
 
     @app.on_message()
     async def my_handler(client: Client, message: Message):
+        """Сердце бота. Здесь мы отправляем сообщение ИИ, после чего отправляем результат актерам"""
         try:
+            pict = False
+            casting_text = message.text
+            # Если файл с описанием, то текст будет None. Значит возьмем его из caption
+            if message.media == MessageMediaType.PHOTO:
+                pict = True
+                casting_text = message.caption
+            casting_data, casting_config, casting_contacts, casting_rights, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
+            # if message.forward_from_chat:
+            #     chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
+            # else:
+            #     chat_id, message_id = message.chat.id, message.id
+
+            # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
             try:
-                casting_text = message.text.replace('\\', ' ')
-            except AttributeError:  # Если картинка с описанием
-                casting_text = message.caption.replace('\\', ' ')
-            casting_data, casting_config, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
-            if message.forward_from_chat:
-                chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
-            else:
-                chat_id, message_id = message.chat.id, message.id
-            try:
+                # Сохраняем в базу
                 await base.add_new_casting(
                     casting_hash=casting_hash,
                     casting_data=json.dumps(casting_data),
                     casting_config=json.dumps(casting_config),
-                    casting_origin='_'.join([str(chat_id), str(message_id)])
+                    casting_origin=f'https://t.me/{message.chat.username}/{message.id}'
                 )
-            # except PostgresSyntaxError:
-            #     with open('print.log', 'a', encoding='utf-8') as file:
-            #         file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n==================\n\n')
-
-
+                # И публикуем в закрытом канале в качестве оригинала
+                if not pict:
+                    m = await bot.send_message(chat_id=PUBLIC_CHANNEL, text=casting_text)
+                else:
+                    m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=message.photo.file_id, caption=casting_text)
                 # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
                 all_actors = await base.get_all_actors()
                 for actor in all_actors:
@@ -165,8 +195,8 @@ async def parser_start():
                             if actor['sex'] == role['actor_sex']:
                                 # Проверяем, подходит ли проект актеру
                                 if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
-                                    # Проверяем, подходит ли тип роли
-                                    if role['role_type'] in actor['roles_type_interest'].split('+') or role['role_type'] == 'Unspecified':
+                                    # Проверяем, подходит гонорар
+                                    if (actor['fee'] <= role['fee']) or role['fee'] == 0 or 'free' in actor['projects_interest'].split('+'):
                                         # Проверяем возраст актера
                                         # Игровой диапазон актера
                                         a = [int(i) for i in actor['playing_age'].split('-')]
@@ -189,10 +219,10 @@ async def parser_start():
 
                         if len(role_list) > 0:
                             msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
-                                        f'<b>Место проведения кастинга:</b> {casting_data["search_city"]}\n'
+                                        # f'<b>Место проведения кастинга:</b> {casting_data["search_city"]}\n'
                                         f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
-                                        f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
-                                        f'<b>Место съемок:</b> {casting_data["filming_location"]}\n\n')
+                                        f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n\n')
+                                        # f'<b>Место съемок:</b> {casting_data["filming_location"]}\n\n')
                             for role_info in role_list:
                                 additional_requirements = role_info["additional_requirements"] if role_info.get(
                                     'additional_requirements') else 'Не указан'
@@ -200,32 +230,37 @@ async def parser_start():
                                 msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
                                              f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
                                              f'<b>Название роли:</b> {role_info["role_name"]}\n'
-                                             f'<b>Тип роли:</b> {role_info["role_type"]}\n'
                                              f'<b>Описание роли:</b> {role_info["role_description"]}\n'
                                              f'<b>Дополнительные требования:</b> {additional_requirements}\n'
                                              f'<b>Гонорар:</b> {fee}\n\n')
+                            if casting_contacts["contacts"] != 'комментарии':
+                                msg_text += (f'<b>Контакты:</b> {casting_contacts["contacts"]}\n'
+                                             f'<b>Заголовок письма:</b> {casting_contacts["title"]}\n'
+                                             f'<b>Правила оформления заявки:</b> {casting_contacts["rules"]}\n')
+                            else:
+                                msg_text += (f'<b>Заявки оставлять в комментариях:</b> '
+                                             f'https://t.me/{message.chat.username}/{message.id}\n'
+                                             f'<b>Правила оформления заявки:</b> {casting_contacts["rules"]}\n')
+
+                            if casting_rights:
+                                msg_text += f'<b>Права:</b> {casting_rights["rights"]}'
 
                             await bot.send_message(
                                 chat_id=actor['user_id'],
                                 text=msg_text,
                                 reply_markup=await button_for_casting(
-                                    chat_id=chat_id,
-                                    message_id=message_id,
+                                    message_id=m.message_id,
                                     casting_hash=casting_hash
                                 )
                             )
             except PostgresSyntaxError as e:
-                with open('print.log', 'a', encoding='utf-8') as file:
+                with open('psql_er.log', 'a', encoding='utf-8') as file:
                     file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n{str(e)}\n==================\n\n')
 
-        except TypeError as e:  # Значит не кастинг или непредвиденная ошибка
-            # print(e)
+        except TypeError as e:  # Значит не кастинг
             pass
         except UniqueViolationError:  # Проскачил уже имеющийся в базе
             pass
-        except AttributeError:  # Картинки или файлы без описания
-            pass
-
 
 
 async def parser_stop():

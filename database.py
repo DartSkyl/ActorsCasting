@@ -50,9 +50,9 @@ class BotBase:
             await connection.execute("CREATE TABLE IF NOT EXISTS all_castings"
                                      "(casting_hash VARCHAR(155) PRIMARY KEY,"
                                      "time_added DATE,"
-                                     "casting_data JSONB,"
-                                     "casting_config JSONB,"
-                                     "casting_origin VARCHAR(155));")
+                                     "casting_data TEXT,"
+                                     "casting_config TEXT,"
+                                     "casting_origin TEXT);")
 
     # ====================
     # Операции с пользователями

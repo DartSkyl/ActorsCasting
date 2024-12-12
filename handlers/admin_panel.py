@@ -30,11 +30,12 @@ async def open_casting_bd_menu(msg: Message, state: FSMContext):
 
 async def forming_casting_msg(casting_data, time_added, more_details=False):
     """Формирует сообщения с информацией о кастинге"""
-    msg_text = (f'<i>Кастинг добавлен:</i> {time_added}\n\n<b>Город кастинга:</b> {casting_data["search_city"]}\n'
+    msg_text = (f'<i>Кастинг добавлен:</i> {time_added}\n\n'
+                # f'<b>Город кастинга:</b> {casting_data["search_city"]}\n'
                 f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
                 f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
-                f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n'
-                f'<b>Место съемок:</b> {casting_data["filming_location"]}\n')
+                f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n')
+                # f'<b>Место съемок:</b> {casting_data["filming_location"]}\n')
     if more_details:
         roles_info = 'Требуемые роли:\n\n'
         for role in casting_data['role_description']:
@@ -43,7 +44,7 @@ async def forming_casting_msg(casting_data, time_added, more_details=False):
             roles_info += (f'<b>Пол актера:</b> {role["actor_sex"]}\n'
                            f'<b>Возраст актера:</b> {role["age_restrictions"]}\n'
                            f'<b>Название роли:</b> {role["role_name"]}\n'
-                           f'<b>Тип роли:</b> {role["role_type"]}\n'
+                           # f'<b>Тип роли:</b> {role["role_type"]}\n'
                            f'<b>Описание роли:</b> {role["role_description"]}\n'
                            # f'Дополнительные требования: {role["additional_requirements"]}\n'
                            # f'Гонорар: {role["fee"]}\n'
@@ -119,17 +120,14 @@ async def get_user_date_interval(msg: Message, state: FSMContext):
 @admin_router.callback_query(F.data.startswith('view_'))
 async def show_more_details(callback: CallbackQuery):
     """Разворачиваем сообщение с кастингом подробнее"""
-    # try:
     await callback.answer()
     casting = (await base.get_casting(callback.data.replace('view_', '')))[0]
     msg_text = await forming_casting_msg(json.loads(casting['casting_data']), casting['time_added'], True)
     await callback.message.edit_text(msg_text, reply_markup=await button_for_casting_admin(
-        origin=casting['casting_origin'],
+        origin='123',
         casting_hash=casting['casting_hash'],
         viewing=True
     ))
-    # except Exception as e:
-    #     await bot.send_message(chat_id=1004280953, text=str(e))
 
 
 @admin_router.callback_query(F.data.startswith('rm_admin_'))

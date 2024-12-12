@@ -24,7 +24,8 @@ async def start_up():
     dp.include_router(users_router)
     await bot.set_my_commands([
         BotCommand(command='start', description='Главное меню и рестарт'),
-        BotCommand(command='support', description='Контакт службы поддержки')
+        BotCommand(command='support', description='Контакт службы поддержки'),
+        BotCommand(command='settings', description='Настройки аккаунта')
     ])
     with open('bot.log', 'a') as log_file:
         log_file.write(f'\n========== New bot session {datetime.datetime.now()} ==========\n\n')

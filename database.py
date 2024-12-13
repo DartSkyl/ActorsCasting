@@ -52,7 +52,8 @@ class BotBase:
                                      "time_added DATE,"
                                      "casting_data TEXT,"
                                      "casting_config TEXT,"
-                                     "casting_origin TEXT);")
+                                     "casting_origin TEXT,"
+                                     "origin_for_user TEXT);")
 
     # ====================
     # Операции с пользователями
@@ -111,13 +112,13 @@ class BotBase:
     # Операции с кастингами
     # ====================
 
-    async def add_new_casting(self, casting_hash, casting_data, casting_config, casting_origin):
+    async def add_new_casting(self, casting_hash, casting_data, casting_config, casting_origin, origin_for_user):
         """Метод сохраняет новый кастинг в БД"""
         async with self.pool.acquire() as connection:
             await connection.execute(f"INSERT INTO public.all_castings"
-                                     f"(casting_hash, time_added, casting_data, casting_config, casting_origin)"
+                                     f"(casting_hash, time_added, casting_data, casting_config, casting_origin, origin_for_user)"
                                      f"VALUES ('{casting_hash}', '{datetime.date.today()}', "
-                                     f"'{casting_data}','{casting_config}', '{casting_origin}');")
+                                     f"'{casting_data}','{casting_config}', '{casting_origin}', '{origin_for_user}');")
 
     async def get_casting(self, casting_hash):
         """Достаем кастинг из базы"""

@@ -12,7 +12,7 @@ ADMINS = {int(i) for i in os.getenv('admins_id').split()}
 MAIN_GROUP = int(os.getenv('main_group'))  # Канал для публикации кастингов
 CONTROL_GROUP = int(os.getenv('control_group'))  # Канал для оплаты
 PUBLIC_CHANNEL = int(os.getenv('public_channel'))  # Сюда публикуются кастинги после парсинга
-PUBLIC_LINK = int(os.getenv('public_link'))  # Нужно для создания ссылок на сообщения в закрытый канал
+# PUBLIC_LINK = int(os.getenv('public_link'))  # Нужно для создания ссылок на сообщения в закрытый канал
 PAYWALL_URL = os.getenv('paywall_url')
 SUPPORT = os.getenv('support')
 

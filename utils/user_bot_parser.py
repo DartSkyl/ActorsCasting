@@ -15,7 +15,7 @@ from asyncpg.exceptions import UniqueViolationError, PostgresSyntaxError
 from loader import techno_dict, bot, base
 from utils.ai_parser import get_casting_data
 from keyboards.inline_actors import button_for_casting
-from config import CONTROL_GROUP, PUBLIC_CHANNEL, PUBLIC_LINK
+from config import CONTROL_GROUP, PUBLIC_CHANNEL
 
 
 class UserBotParser:
@@ -171,18 +171,19 @@ async def parser_start():
 
             # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
             try:
-                # Сохраняем в базу
-                await base.add_new_casting(
-                    casting_hash=casting_hash,
-                    casting_data=json.dumps(casting_data),
-                    casting_config=json.dumps(casting_config),
-                    casting_origin=f'https://t.me/{message.chat.username}/{message.id}'
-                )
                 # И публикуем в закрытом канале в качестве оригинала
                 if not pict:
                     m = await bot.send_message(chat_id=PUBLIC_CHANNEL, text=casting_text)
                 else:
                     m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=message.photo.file_id, caption=casting_text)
+                # Сохраняем в базу
+                await base.add_new_casting(
+                    casting_hash=casting_hash,
+                    casting_data=json.dumps(casting_data),
+                    casting_config=json.dumps(casting_config),
+                    casting_origin=f'https://t.me/{message.chat.username}/{message.id}',
+                    origin_for_user=m.message_id
+                )
                 # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
                 all_actors = await base.get_all_actors()
                 for actor in all_actors:

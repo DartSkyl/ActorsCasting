@@ -18,8 +18,9 @@ class CastingForActors(BaseModel):
         role_name: str = Field(description='Название роли или имя персонажа, которого предстоит сыграть')
         role_description: str = Field(description='Описание роли того, кого нужно сыграть')
         additional_requirements: str = Field(default='Не указан', description='Референс, описание сцен из фильма')
-        fee: str = Field(default='Не указан', description='Гонорар, который актер получит за роль. В тексте может '
-                                                          'быть обозначена "ставка" или что то подобное')
+        fee: str = Field(default='0', description='Гонорар, который актер получит за роль. В тексте может '
+                                                  'быть обозначена "ставка" или что то подобное. '
+                                                  'Если ничего не указано, то просто 0')
 
     # search_city: str = Field(default='Не указан', description='Город, где проходит кастинг')
     project_name: str = Field(description='Название проекта')
@@ -137,7 +138,9 @@ executed_hash = set()
 async def get_casting_data(casting_msg: str):
     """Первая цепочка проверяет, содержит ли сообщение информацию о кастинге. Если содержит, то вторая достает ее и
     группирует, а третья формирует конфигурации по этому кастингу, четвертая достает информацию по контактам и правилам
-    оформления заявок, пятая достает права из кастингов для рекламы"""
+    оформления заявок, пятая достает права из кастингов для рекламы. Каждый этап взаимодействия с ИИ обернут в
+    бесконечный цикл While True, а внутри try except. Сделано это потому, что очень часто вылазит ошибка output parser
+    error на ровном месте"""
     # Проверяем сообщение на наличие кастинга
     while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
         try:
@@ -154,7 +157,7 @@ async def get_casting_data(casting_msg: str):
         str_for_hashing = casting_msg[:100].encode()
         casting_hash = hashlib.sha256(str_for_hashing).hexdigest()
         if casting_hash not in executed_hash:
-            while True:  # Иногда вылазит ошибка KeyError: 'fee'
+            while True:  # Иногда вылазит ошибка KeyError: 'fee', а это нам нельзя
                 try:
                     # Сначала достаем всю информацию о кастинге из сообщения
                     while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
@@ -210,8 +213,7 @@ async def get_casting_data(casting_msg: str):
         else:
             return False
     else:
-        with open('psql_er.log', 'a', encoding='utf-8') as file:
+        with open('drop.log', 'a', encoding='utf-8') as file:
             file.write(
                 f'\n==================\n{casting_msg}\n==================\n\n')
-
         return False

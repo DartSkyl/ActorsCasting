@@ -124,7 +124,7 @@ async def show_more_details(callback: CallbackQuery):
     casting = (await base.get_casting(callback.data.replace('view_', '')))[0]
     msg_text = await forming_casting_msg(json.loads(casting['casting_data']), casting['time_added'], True)
     await callback.message.edit_text(msg_text, reply_markup=await button_for_casting_admin(
-        origin='123',
+        origin=casting['casting_origin'],
         casting_hash=casting['casting_hash'],
         viewing=True
     ))

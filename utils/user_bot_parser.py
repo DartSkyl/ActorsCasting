@@ -175,7 +175,9 @@ async def parser_start():
                 if not pict:
                     m = await bot.send_message(chat_id=PUBLIC_CHANNEL, text=casting_text)
                 else:
-                    m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=message.photo.file_id, caption=casting_text)
+                    f = await app.download_media(message)
+                    m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
+                    os.remove(f)
                 # Сохраняем в базу
                 await base.add_new_casting(
                     casting_hash=casting_hash,

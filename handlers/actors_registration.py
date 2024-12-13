@@ -7,8 +7,9 @@ from loader import base, techno_dict
 from utils.users_router import users_router
 from utils.user_bot_parser import check_paid
 from states import ActorsState
-from keyboards.reply import role_choice, skip_button, registry_button, main_menu_actor, first_answer_button, pay_choice
-from keyboards.inline_actors import sex_choice, education_choice, experience_choice, role_interested, editor_keyboard, paid_url
+from keyboards.reply import skip_button, main_menu_actor, pay_choice
+from keyboards.inline_actors import (sex_choice, education_choice, experience_choice,
+                                     role_interested, editor_keyboard, paid_url, first_start, first_answer)
 
 
 @users_router.message(Command('start'))
@@ -21,28 +22,31 @@ async def start_func(msg: Message):
     else:
         await msg.answer('Привет! Я – ваш помощник в мире кино, театра и рекламы. Моя миссия — помогать актёрам '
                          'находить роли, а кастинг-директорам публиковать кастинги и искать подходящих исполнителей.'
-                         '\nКто вы:', reply_markup=role_choice)
+                         '\nКто вы:', reply_markup=first_start)
 
 
-@users_router.message(F.text == 'Актёр, ищущий кастинги')
-async def start_actor_registration(msg: Message, state: FSMContext):
+@users_router.callback_query(F.data == 'actor')
+async def start_actor_registration(callback: CallbackQuery, state: FSMContext):
     """Начало регистрации актера"""
-    await msg.answer('Класс, люблю работать с актёрами. Потому что кто-то из них рано '
-                     'или поздно точно станет знаменитым😎')
-    await msg.answer('Хочешь, я буду подбирать тебе целевые кастинги по полу, возрасту и типу проекта?',
-                     reply_markup=first_answer_button)
-    # await state.set_state(ActorsState.actor_name)
+    await callback.answer()
+    await callback.message.answer('Класс, люблю работать с актёрами. Потому что кто-то из них рано '
+                                  'или поздно точно станет знаменитым😎')
+    await callback.message.answer('Хочешь, я буду подбирать тебе целевые кастинги по полу, возрасту и типу проекта?',
+                                  reply_markup=first_answer)
 
 
-@users_router.message(F.text == 'Да, было бы здорово! А что, так можно было?')
-async def registration_first_step(msg: Message, state: FSMContext):
+@users_router.callback_query(F.data == 'reg_start')
+async def registration_first_step(callback: CallbackQuery, state: FSMContext):
     """Забавный диалог"""
+    await callback.answer()
     await state.set_state(ActorsState.actor_name)
-    await msg.answer('Теперь тебе больше не придётся тратить своё время, листая миллионы чатов в поисках "той самой" '
-                     'роли. Я это сделаю за тебя.')
-    await msg.answer('Начнём подбирать тебе кастинги?\nЗаполни, пожалуйста, информацию о себе, чтобы я добавил тебя в '
-                     'нашу <b>актерскую базу</b> и понимал, какие роли тебе предлагать.')
-    await msg.answer('Введи свое ФИО:')
+    await callback.message.answer(
+        'Теперь тебе больше не придётся тратить своё время, листая миллионы чатов в поисках "той самой" '
+        'роли. Я это сделаю за тебя.')
+    await callback.message.answer(
+        'Начнём подбирать тебе кастинги?\nЗаполни, пожалуйста, информацию о себе, чтобы я добавил тебя в '
+        'нашу <b>актерскую базу</b> и понимал, какие роли тебе предлагать.')
+    await callback.message.answer('Введи свое ФИО:')
 
 
 @users_router.message(ActorsState.actor_name)
@@ -152,28 +156,28 @@ async def fee_saver(msg: Message, state: FSMContext):
 
 # Словарь со значениями для формирования сообщений
 dict_for_msg_build = {
-        # Роли
-        'films': 'Кастинги в кино',
-        'series': 'Кастинг в сериал',
-        'ads': 'Кастинги в рекламу',
-        'theater': 'Театральные проекты',
-        'main_role': 'Главные и второстепенные роли',
-        'episode': 'Эпизоды',
-        'mass': 'Групповка/массовка',
-        'free': 'Некоммерческие проекты / фестивальные короткометражные фильмы молодых режиссёров',
-        # Образование
-        'vuz': 'Получил диплом. гос. образца',
-        'curs': 'Прошёл курсы актерского мастерства',
-        'none': 'Актерского образования нет',
-        # Опыт
-        'null': 'Опыта нет, я - новичок',
-        'ads_': 'Снималась(ся) только в рекламе / массовках/групповках',
-        'free_': 'Снималась(ся) в эпизодах / некоммерческих проектах',
-        'main': 'Есть второстепенные / главные роли в полнометражных фильмах/сериалах',
-        # Пол
-        'male': 'Мужской',
-        'female': 'Женский'
-    }
+    # Роли
+    'films': 'Кастинги в кино',
+    'series': 'Кастинг в сериал',
+    'ads': 'Кастинги в рекламу',
+    'theater': 'Театральные проекты',
+    'main_role': 'Главные и второстепенные роли',
+    'episode': 'Эпизоды',
+    'mass': 'Групповка/массовка',
+    'free': 'Некоммерческие проекты / фестивальные короткометражные фильмы молодых режиссёров',
+    # Образование
+    'vuz': 'Получил диплом. гос. образца',
+    'curs': 'Прошёл курсы актерского мастерства',
+    'none': 'Актерского образования нет',
+    # Опыт
+    'null': 'Опыта нет, я - новичок',
+    'ads_': 'Снималась(ся) только в рекламе / массовках/групповках',
+    'free_': 'Снималась(ся) в эпизодах / некоммерческих проектах',
+    'main': 'Есть второстепенные / главные роли в полнометражных фильмах/сериалах',
+    # Пол
+    'male': 'Мужской',
+    'female': 'Женский'
+}
 
 
 @users_router.callback_query(ActorsState.roles_type_interest, F.data != 'ready')
@@ -219,7 +223,7 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
                 f'<b>Минимальный гонорар:</b> {actor_data["fee"]}\n'
                 f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
     await callback.message.answer(msg_text, reply_markup=editor_keyboard)
-    await callback.message.answer('Если все верно нажмите "Зарегистрироваться"', reply_markup=registry_button)
+    await callback.message.answer('Если все верно нажмите "Зарегистрироваться"')
     await state.set_state(ActorsState.preview)
 
 
@@ -240,16 +244,17 @@ async def review_all_data_after_edit(msg: Message, state: FSMContext):
                 f'<b>Минимальный гонорар:</b> {actor_data["fee"]}\n'
                 f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
     await msg.answer(msg_text, reply_markup=editor_keyboard)
-    await msg.answer('Если все верно нажмите "Зарегистрироваться"', reply_markup=registry_button)
+    await msg.answer('Если все верно нажмите "Зарегистрироваться"')
     await state.set_state(ActorsState.preview)
 
 
-@users_router.message(ActorsState.preview, F.text == 'Зарегистрироваться')
-async def registry_new_actor(msg: Message, state: FSMContext):
+@users_router.callback_query(ActorsState.preview, F.data == 'registration')
+async def registry_new_actor(callback: CallbackQuery, state: FSMContext):
     """Регистрируем нового актера"""
+    await callback.answer()
     actor_data = await state.get_data()
     await base.registry_new_actor(
-        user_id=msg.from_user.id,
+        user_id=callback.from_user.id,
         actor_name=actor_data['actor_name'],
         passport_age=actor_data['passport_age'],
         playing_age=actor_data['playing_age'],
@@ -264,10 +269,11 @@ async def registry_new_actor(msg: Message, state: FSMContext):
         social=actor_data['social'],
         projects_interest='+'.join(actor_data['projects_interest'])
     )
-    await msg.answer('Отлично! Теперь я понимаю, какие кастинги тебе подойдут и готов мониторить и присылать их '
-                     'тебе и днём и ночью.\nВыбери подходящий вариант нашего дальнейшего взаимодействия:',
-                     reply_markup=pay_choice)
-    await techno_dict['first_contact'].wait_answer(user_id=str(msg.from_user.id), message=msg)
+    await callback.message.answer(
+        'Отлично! Теперь я понимаю, какие кастинги тебе подойдут и готов мониторить и присылать их '
+        'тебе и днём и ночью.\nВыбери подходящий вариант нашего дальнейшего взаимодействия:',
+        reply_markup=pay_choice)
+    await techno_dict['first_contact'].wait_answer(user_id=str(callback.from_user.id), message=callback.message)
     await state.clear()
 
 
@@ -294,16 +300,20 @@ async def start_edit_data(callback: CallbackQuery, state: FSMContext):
         'edit_actor_name': (ActorsState.edit_actor_name, 'Введите ФИО', None),
         'edit_sex': (ActorsState.edit_sex, 'Выберете пол', sex_choice),
         'edit_passport_age': (ActorsState.edit_passport_age, 'Возраст по паспорту', None),
-        'edit_playing_age': (ActorsState.edit_playing_age, 'Игровой возраст (диапазон, который вы можете играть через дефис)', None),
+        'edit_playing_age': (
+            ActorsState.edit_playing_age, 'Игровой возраст (диапазон, который вы можете играть через дефис)', None),
         'edit_education': (ActorsState.edit_education, 'Выберете образование', education_choice),
         'edit_geo_location': (ActorsState.edit_geo_location, 'Введите город проживания', None),
         'edit_contacts': (ActorsState.edit_contacts, 'Введите контактные данные (телефон, email через запятую)', None),
-        'edit_agent_contact': (ActorsState.edit_agent_contact, 'Контактные данные вашего агента (телефон, email через запятую)', None),
+        'edit_agent_contact': (
+            ActorsState.edit_agent_contact, 'Контактные данные вашего агента (телефон, email через запятую)', None),
         'edit_have_experience': (ActorsState.edit_have_experience, 'Какой у вас опыт?', experience_choice),
         'edit_portfolio': (ActorsState.edit_portfolio, 'Введите ссылку на ваше портфолио', None),
         'edit_social': (ActorsState.edit_social, 'Введите ссылку на страницу в соц. сети', None),
         'edit_fee': (ActorsState.edit_fee, 'Укажите минимальный гонорар в рублях:', None),
-        'edit_roles_type_interest': (ActorsState.edit_roles_type_interest, 'Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов):', role_interested),
+        'edit_roles_type_interest': (ActorsState.edit_roles_type_interest,
+                                     'Выбери из списка то, что тебя интересует (можно выбрать несколько вариантов):',
+                                     role_interested),
     }
 
     await callback.answer()

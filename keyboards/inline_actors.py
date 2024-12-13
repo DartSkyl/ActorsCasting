@@ -2,6 +2,16 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton, 
 from config import PAYWALL_URL
 
 
+first_start = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Актёр, ищущий кастинги', callback_data='actor')],
+    [InlineKeyboardButton(text='Кастинг-директор, желающий разместить кастинг', callback_data='director')]
+])
+
+first_answer = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Да, было бы здорово!', callback_data='reg_start')],
+    [InlineKeyboardButton(text='А что, так можно было?', callback_data='reg_start')]
+])
+
 sex_choice = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Мужской', callback_data='sex_male')],
     [InlineKeyboardButton(text='Женский', callback_data='sex_female')]
@@ -46,6 +56,7 @@ editor_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить соц. сети', callback_data='edit_social')],
     [InlineKeyboardButton(text='Изменить гонорар', callback_data='edit_fee')],
     [InlineKeyboardButton(text='Изменить то, что интересует', callback_data='edit_roles_type_interest')],
+    [InlineKeyboardButton(text='✅ Зарегистрироваться', callback_data='registration')]
 ])
 
 setup_keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -84,4 +95,3 @@ async def paid_url(user_id, is_paid):
     else:
         button = [[InlineKeyboardButton(text='Управление подпиской', url=f'{PAYWALL_URL + str(user_id)}')]]
     return InlineKeyboardMarkup(inline_keyboard=button)
-

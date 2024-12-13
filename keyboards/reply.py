@@ -27,14 +27,14 @@ pay_choice = ReplyKeyboardMarkup(keyboard=[
 ], one_time_keyboard=True, resize_keyboard=True)
 
 
-role_choice = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='Актёр, ищущий кастинги')],
-    [KeyboardButton(text='Кастинг-директор, желающий разместить кастинг')]
-], one_time_keyboard=True, resize_keyboard=True)
+# role_choice = ReplyKeyboardMarkup(keyboard=[
+#     [KeyboardButton(text='Актёр, ищущий кастинги')],
+#     [KeyboardButton(text='Кастинг-директор, желающий разместить кастинг')]
+# ], one_time_keyboard=True, resize_keyboard=True)
 
-first_answer_button = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='Да, было бы здорово! А что, так можно было?')]
-], one_time_keyboard=True, resize_keyboard=True)
+# first_answer_button = ReplyKeyboardMarkup(keyboard=[
+#     [KeyboardButton(text='Да, было бы здорово! А что, так можно было?')]
+# ], one_time_keyboard=True, resize_keyboard=True)
 
 
 cancel_button = ReplyKeyboardMarkup(keyboard=[

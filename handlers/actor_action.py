@@ -48,28 +48,20 @@ from keyboards.inline_actors import (setup_keyboard, education_choice, paid_url,
 async def get_origin_request(callback: CallbackQuery, state: FSMContext):
     """Ловим запрос от пользователя на получение оригинала сообщения"""
     await callback.answer()
+    # После следующей операции получим список из 3 элементов:
+    # ID в канале со всеми кастингами, username канала источника, ID сообщения в канале источнике
+    msg_info = callback.data.replace('origin_', '').split('-')
     await bot.forward_message(
         chat_id=callback.from_user.id,
         from_chat_id=PUBLIC_CHANNEL,
-        message_id=int(callback.data.replace('origin_', '')))
-    # Извлекаем ID чата и сообщения из callback и формируем из них список
-    # origin_message = [int(i) for i in callback.data.replace('origin_', '').split('_')]
-
-    # Отправляем сообщения в личку бота
-    # await techno_dict['parser'].forward_origin_message(
-    #     origin_chat=origin_message[0],
-    #     origin_message=origin_message[1],
-    #     user_id=callback.from_user.id
-    # )
-    # Так как для этих двух функций используется словарь с одним ключом, но разным значением, то сделаем небольшую паузу
-    # await asyncio.sleep(0.5)
+        message_id=int(msg_info[0]))
 
     # Если есть текст для проб, в виде файла, идущем следующем сообщением в чате-источнике, то пробросим и его
-    # await techno_dict['parser'].check_text_for_prob(
-    #     origin_chat=origin_message[0],
-    #     next_origin_message=(origin_message[1] + 1),
-    #     user_id=callback.from_user.id
-    # )
+    await techno_dict['parser'].check_text_for_prob(
+        origin_chat=msg_info[1],
+        next_origin_message=(int(msg_info[2]) + 1),
+        user_id=callback.from_user.id
+    )
 
 
 # ====================

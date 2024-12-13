@@ -55,54 +55,45 @@ class UserBotParser:
             self.status = True
             await self._client.start()
 
-    async def forward_origin_message(self, user_id, origin_chat, origin_message):
-        """Метод перебрасывает оригинальное сообщение из чата в личку к боту,
-        что бы оттуда перебросить к пользователю"""
-        # Что бы перебросить сообщение от бота к пользователю будем использовать эту причудливую
-        # конструкцию. Сохраним в заранее созданный список словарь, где ключ это ID пользователя,
-        # который запросил оригинал, а значение это информация об источнике и искомом сообщении.
-        # Когда переброшенное сообщение прейдет от парсера к боту, мы достанем информацию из пересланного сообщения и
-        # сравним ее с той что храниться в списке
-        techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(origin_message)})
-        try:
-            await self._client.forward_messages(
-                chat_id=techno_dict['bot_id'],
-                from_chat_id=origin_chat,
-                message_ids=origin_message
-            )
-        except ChatForwardsRestricted:  # Если пересылка запрещена
-            techno_dict['forwarding'].remove({user_id: str(origin_chat) + '_' + str(origin_message)})
-            msg_text = await self._client.get_messages(
-                chat_id=origin_chat,
-                message_ids=origin_message
-            )
-            try:
-                await bot.send_message(chat_id=user_id, text=msg_text.text)
-            except ValidationError:
-                await bot.send_message(chat_id=user_id, text=msg_text.caption)
-
-        except Exception as e:  # Проблема новых каналов\групп
-            with open('print.log', 'a') as log_file:
-                log_file.write(f'\n====================\n{str(e)}\n')
-            await bot.send_message(chat_id=user_id, text='Оригинал больше не доступен!')
-            techno_dict['forwarding'].remove({user_id: str(origin_chat) + '_' + str(origin_message)})
+    # async def forward_origin_message(self, user_id, origin_chat, origin_message):
+    #     """Метод перебрасывает оригинальное сообщение из чата в личку к боту,
+    #     что бы оттуда перебросить к пользователю"""
+    #     # Что бы перебросить сообщение от бота к пользователю будем использовать эту причудливую
+    #     # конструкцию. Сохраним в заранее созданный список словарь, где ключ это ID пользователя,
+    #     # который запросил оригинал, а значение это информация об источнике и искомом сообщении.
+    #     # Когда переброшенное сообщение прейдет от парсера к боту, мы достанем информацию из пересланного сообщения и
+    #     # сравним ее с той что храниться в списке
+    #     techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(origin_message)})
+    #     try:
+    #         await self._client.forward_messages(
+    #             chat_id=techno_dict['bot_id'],
+    #             from_chat_id=origin_chat,
+    #             message_ids=origin_message
+    #         )
+    #     except ChatForwardsRestricted:  # Если пересылка запрещена
+    #         techno_dict['forwarding'].remove({user_id: str(origin_chat) + '_' + str(origin_message)})
+    #         msg_text = await self._client.get_messages(
+    #             chat_id=origin_chat,
+    #             message_ids=origin_message
+    #         )
+    #         try:
+    #             await bot.send_message(chat_id=user_id, text=msg_text.text)
+    #         except ValidationError:
+    #             await bot.send_message(chat_id=user_id, text=msg_text.caption)
+    #
+    #     except Exception as e:  # Проблема новых каналов\групп
+    #         with open('print.log', 'a') as log_file:
+    #             log_file.write(f'\n====================\n{str(e)}\n')
+    #         await bot.send_message(chat_id=user_id, text='Оригинал больше не доступен!')
+    #         techno_dict['forwarding'].remove({user_id: str(origin_chat) + '_' + str(origin_message)})
 
     async def check_text_for_prob(self, user_id, origin_chat, next_origin_message):
         """Этим методом проверяем есть ли текст проб в следующем сообщении в виде файла"""
-        try:
-            prob_text = await self._client.get_messages(chat_id=origin_chat, message_ids=next_origin_message)
-            if prob_text.media == MessageMediaType.DOCUMENT:
-                techno_dict['forwarding'].append({user_id: str(origin_chat) + '_' + str(next_origin_message)})
-                await self._client.forward_messages(
-                    chat_id=techno_dict['bot_id'],
-                    from_chat_id=origin_chat,
-                    message_ids=next_origin_message
-                )
-                return True
-            return False
-        except Exception as e:
-            print(e)
-            return False
+        prob_text = await self._client.get_messages(chat_id=origin_chat, message_ids=next_origin_message)
+        if prob_text.media == MessageMediaType.DOCUMENT:
+            f = await self._client.download_media(prob_text)
+            await bot.send_document(chat_id=user_id, document=FSInputFile(f))
+            os.remove(f)
 
 
 async def check_paid(user_id):
@@ -184,7 +175,7 @@ async def parser_start():
                     casting_data=json.dumps(casting_data),
                     casting_config=json.dumps(casting_config),
                     casting_origin=f'https://t.me/{message.chat.username}/{message.id}',
-                    origin_for_user=m.message_id
+                    origin_for_user=f'{m.message_id}-{message.chat.username}-{message.id}'
                 )
                 # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
                 all_actors = await base.get_all_actors()
@@ -252,7 +243,7 @@ async def parser_start():
                                 chat_id=actor['user_id'],
                                 text=msg_text,
                                 reply_markup=await button_for_casting(
-                                    message_id=m.message_id,
+                                    message_id=f'{m.message_id}-{message.chat.username}-{message.id}',
                                     casting_hash=casting_hash
                                 )
                             )

@@ -219,7 +219,8 @@ async def open_acc_setup_menu(msg: Message, state: FSMContext):
                     f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                     f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                     f'<b>Соц. сети:</b> {actor_data["social"]}\n'
-                    f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}')
+                    f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}\n'
+                    f'<b>Минимальный гонорар:</b> {actor_data["fee"]}')
         await state.set_data({'projects_interest': actor_data["projects_interest"].split("+")})
         await msg.answer(msg_text, reply_markup=setup_keyboard)
 

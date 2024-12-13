@@ -136,7 +136,8 @@ executed_hash = set()
 
 async def get_casting_data(casting_msg: str):
     """Первая цепочка проверяет, содержит ли сообщение информацию о кастинге. Если содержит, то вторая достает ее и
-    группирует, а третья формирует конфигурации по этому кастингу"""
+    группирует, а третья формирует конфигурации по этому кастингу, четвертая достает информацию по контактам и правилам
+    оформления заявок, пятая достает права из кастингов для рекламы"""
     # Проверяем сообщение на наличие кастинга
     while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
         try:
@@ -153,32 +154,36 @@ async def get_casting_data(casting_msg: str):
         str_for_hashing = casting_msg[:100].encode()
         casting_hash = hashlib.sha256(str_for_hashing).hexdigest()
         if casting_hash not in executed_hash:
-
-            # Сначала достаем всю информацию о кастинге из сообщения
-            while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
+            while True:  # Иногда вылазит ошибка KeyError: 'fee'
                 try:
-                    chain = prompt | model | parser
-                    casting_data = await chain.ainvoke({'input': casting_msg,
-                                                        'format_instructions': parser.get_format_instructions()})
-                    break
-                except Exception as e:
-                    print(e)
-            casting_config = []
+                    # Сначала достаем всю информацию о кастинге из сообщения
+                    while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
+                        try:
+                            chain = prompt | model | parser
+                            casting_data = await chain.ainvoke({'input': casting_msg,
+                                                                'format_instructions': parser.get_format_instructions()})
+                            break
+                        except Exception as e:
+                            print(e)
+                    casting_config = []
 
-            # Из получившейся информации нужно сформировать сообщение для формирования конфигураций
-            for role in casting_data['role_description']:
-                input_text_for_prompt_2 = f'Тип проекта: {casting_data["project_type"]}\n'
-                input_text_for_prompt_2 += (f'Пол актера: {role["actor_sex"]}\n'
-                                            f'Возраст актера:{role["age_restrictions"]}\n'
-                                            f'Гонорар: {role["fee"]}')
-                while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
-                    try:
-                        chain_2 = prompt_2 | model | parser_2
-                        casting_config.append(await chain_2.ainvoke({'input': input_text_for_prompt_2,
-                                                                     'format_instructions': parser_2.get_format_instructions()}))
-                        break
-                    except Exception as e:
-                        print(e)
+                    # Из получившейся информации нужно сформировать сообщение для формирования конфигураций
+                    for role in casting_data['role_description']:
+                        input_text_for_prompt_2 = f'Тип проекта: {casting_data["project_type"]}\n'
+                        input_text_for_prompt_2 += (f'Пол актера: {role["actor_sex"]}\n'
+                                                    f'Возраст актера:{role["age_restrictions"]}\n'
+                                                    f'Гонорар: {role["fee"]}')
+                        while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
+                            try:
+                                chain_2 = prompt_2 | model | parser_2
+                                casting_config.append(await chain_2.ainvoke({'input': input_text_for_prompt_2,
+                                                                             'format_instructions': parser_2.get_format_instructions()}))
+                                break
+                            except Exception as e:
+                                print(e)
+                    break
+                except KeyError as e:
+                    print(e)
             while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
                 try:
                     chain_3 = prompt_3 | model | parser_3

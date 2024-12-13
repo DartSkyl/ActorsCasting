@@ -195,7 +195,7 @@ async def parser_start():
                             # Проверяем, подходит ли проект актеру
                             if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
                                 # Проверяем, подходит гонорар
-                                if (actor['fee'] <= role['fee']) or role['fee'] == 0 or 'free' in actor['projects_interest'].split('+'):
+                                if (actor['fee'] <= role['fee']) or role['fee'] == 0 or ('free' in actor['projects_interest'].split('+') and role['project_type'] == 'free'):
                                     # Проверяем возраст актера
                                     # Игровой диапазон актера
                                     a = [int(i) for i in actor['playing_age'].split('-')]

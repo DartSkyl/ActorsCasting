@@ -242,7 +242,7 @@ async def parser_start():
                                          f'<b>Правила оформления заявки:</b> {casting_contacts["rules"]}\n')
 
                         if casting_rights:
-                            msg_text += f'<b>Права:</b> {casting_rights["rights"]}'
+                            msg_text += f'<b>Права:</b> {casting_rights["rights"]}\n'
                         if casting_prob['text'] != 'Отсутствует':
                             msg_text += f'<b>Текст для проб:</b> {casting_prob["text"]}\n'
                         else:

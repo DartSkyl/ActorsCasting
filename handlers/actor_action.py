@@ -19,31 +19,6 @@ from keyboards.inline_actors import (setup_keyboard, education_choice, paid_url,
                                      experience_choice, role_interested, button_for_casting)
 
 
-# @dp.message(F.forward_origin)
-# async def for_forward_message(msg: Message):
-#     """Дле перебрасывания сообщений, сам ты извращенец!"""
-#     if msg.from_user.id == techno_dict['parser_id']:
-#         user_for_drop = None
-#         for user in techno_dict['forwarding']:
-#             # У каждого элемента списка словарь с одним ключем и одним значением и что бы их извлечь делаем так:
-#             for user_id, user_request in user.items():
-#                 user_request = [int(i) for i in user_request.split('_')]
-#                 # Теперь проверяем, что бы переброшенное сообщение соответствовало запросу пользователя
-#                 try:
-#                     if msg.forward_origin.message_id == user_request[1] and msg.forward_origin.chat.id == user_request[0]:
-#                         await msg.forward(user_id)
-#                         user_for_drop = user
-#                         break
-#                 except AttributeError:  # Если пересылка из чата, то тут мы никак не проверим
-#                     await msg.forward(user_id)
-#                     user_for_drop = user
-#                     break
-#
-#             techno_dict['forwarding'].remove(user_for_drop)
-#     else:
-#         await msg.answer('Нельзя пересылать боту сообщения!')
-
-
 @users_router.callback_query(F.data.startswith('origin_'))
 async def get_origin_request(callback: CallbackQuery, state: FSMContext):
     """Ловим запрос от пользователя на получение оригинала сообщения"""

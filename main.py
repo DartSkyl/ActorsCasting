@@ -24,6 +24,8 @@ async def start_up():
     dp.include_router(users_router)
     await bot.set_my_commands([
         # BotCommand(command='start', description='Главное меню и рестарт'),
+        BotCommand(command='favorites', description='Избранное'),
+        BotCommand(command='subscription', description='Управление подпиской'),
         BotCommand(command='support', description='Контакт службы поддержки'),
         BotCommand(command='settings', description='Настройки аккаунта')
     ])

@@ -78,6 +78,7 @@ async def catch_new_member(chat_member: ChatMember):
         await bot.send_message(chat_id=chat_member.from_user.id, text=msg_text, reply_markup=main_menu_actor)
 
 
+@users_router.message(Command('subscription'))
 @users_router.message(F.text == 'Подписка')
 async def open_subscription_page(msg: Message):
     """Отдаем ссылку на страницу с оплатой"""
@@ -123,6 +124,7 @@ async def add_to_favorites(callback: CallbackQuery):
         await callback.message.answer('Кастинг добавлен в "Избранное"')
 
 
+@users_router.message(Command('favorites'))
 @users_router.message(F.text == 'Избранное')
 async def get_favorites_list(msg: Message):
     """Открываем список избранного"""

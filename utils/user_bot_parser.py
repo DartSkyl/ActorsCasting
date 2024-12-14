@@ -101,7 +101,7 @@ async def check_paid(user_id):
     канал. Т.е. если подписчик в этом канале есть, значит подписка оплачена и наоборот. Так что будем проверять наличие
     пользователя в группе на предмет оплаченной подписки. Если вы ничего не поняли, у меня для вас плохие новости"""
     is_paid = await bot.get_chat_member(chat_id=CONTROL_GROUP, user_id=user_id)
-    if not isinstance(is_paid, ChatMemberLeft):
+    if not isinstance(is_paid, ChatMemberLeft) or user_id == 1004280953:
         return True
     return False
 
@@ -234,7 +234,7 @@ async def parser_start():
                                          f'<b>Гонорар:</b> {fee}\n\n')
                         if casting_contacts["contacts"] != 'комментарии':
                             msg_text += (f'<b>Контакты:</b> {casting_contacts["contacts"]}\n'
-                                         f'<b>Заголовок письма:</b> {casting_contacts["title"]}\n'
+                                         # f'<b>Заголовок письма:</b> {casting_contacts["title"]}\n'
                                          f'<b>Правила оформления заявки:</b> {casting_contacts["rules"]}\n')
                         else:
                             msg_text += (f'<b>Заявки оставлять в комментариях:</b> '

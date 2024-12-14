@@ -55,6 +55,11 @@ class BotBase:
                                      "casting_origin TEXT,"
                                      "origin_for_user TEXT);")
 
+            # Таблица с текстами кастингов для проверки на уникальность
+            await connection.execute("CREATE TABLE IF NOT EXISTS all_castings_texts"
+                                     "(id SERIAL PRIMARY KEY,"
+                                     "casting_text TEXT);")
+
     # ====================
     # Операции с пользователями
     # ====================
@@ -151,3 +156,18 @@ class BotBase:
         """Удаляем кастинг из базы"""
         async with self.pool.acquire() as connection:
             await connection.execute(f"DELETE FROM public.all_castings WHERE casting_hash = '{casting_hash}';")
+
+    # ====================
+    # Операции с текстами кастингов
+    # ====================
+
+    async def add_new_text(self, casting_text):
+        """Добавляем новый текст в базу"""
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"INSERT INTO public.all_castings_texts (casting_text) VALUES ('{casting_text}');")
+
+    async def get_all_texts(self):
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT casting_text FROM public.all_castings_texts LIMIT 200;")
+            return result
+

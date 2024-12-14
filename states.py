@@ -64,6 +64,8 @@ class AdminStates(StatesGroup):
     set_period = State()
     set_user_date = State()
 
+    second_text = State()
+
 
 class AddNewCasting(StatesGroup):
     """Для добавления нового кастинга"""

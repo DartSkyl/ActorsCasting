@@ -154,7 +154,7 @@ async def parser_start():
             if message.media == MessageMediaType.PHOTO:
                 pict = True
                 casting_text = message.caption
-            casting_data, casting_config, casting_contacts, casting_rights, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
+            casting_data, casting_config, casting_contacts, casting_rights, casting_prob, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
             # if message.forward_from_chat:
             #     chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
             # else:
@@ -204,7 +204,7 @@ async def parser_start():
                                     try:
                                         b = [int(i) for i in role['age_restrictions'].split('-')]
                                         b.sort()
-                                        if a[0] >= b[0] >= a[1] or a[0] <= b[1] <= a[1]:  # noqa
+                                        if a[0] <= b[0] <= a[1] or a[0] <= b[1] <= a[1]:  # noqa
                                             role_list.append(casting_data['role_description'][role_index - 1])
                                     except ValueError:
                                         if '+' in role['age_restrictions']:  # Если возрастные требования в формате n+
@@ -243,9 +243,22 @@ async def parser_start():
 
                         if casting_rights:
                             msg_text += f'<b>Права:</b> {casting_rights["rights"]}'
-
+                        if casting_prob['text'] != 'Отсутствует':
+                            msg_text += f'<b>Текст для проб:</b> {casting_prob["text"]}\n'
+                        else:
+                            msg_text += f'<b>Текст для проб:</b> -\n'
                         await bot.send_message(
                             chat_id=actor['user_id'],
+                            text=msg_text,
+                            reply_markup=await button_for_casting(
+                                message_id=f'{m.message_id}-{message.chat.username}-{message.id}',
+                                casting_hash=casting_hash
+                            )
+                        )
+                        # Для мониторинга того, что приходит другим
+                        msg_text += f'<b>Кому отправлено:</b> {actor["actor_name"]}\n'
+                        await bot.send_message(
+                            chat_id=1004280953,
                             text=msg_text,
                             reply_markup=await button_for_casting(
                                 message_id=f'{m.message_id}-{message.chat.username}-{message.id}',

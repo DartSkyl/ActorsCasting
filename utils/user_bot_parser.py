@@ -237,7 +237,7 @@ async def parser_start():
                                          f'<b>Название роли:</b> {role_info["role_name"]}\n'
                                          f'<b>Описание роли:</b> {role_info["role_description"]}\n'
                                          f'<b>Дополнительные требования:</b> {additional_requirements}\n'
-                                         f'<b>Гонорар:</b> {fee}\n\n')
+                                         f'<b>Гонорар:</b> {fee if fee != "0" else "-"}\n\n')
                         if casting_contacts["contacts"] != 'комментарии':
                             msg_text += (f'<b>Контакты:</b> {casting_contacts["contacts"]}\n'
                                          # f'<b>Заголовок письма:</b> {casting_contacts["title"]}\n'

@@ -10,7 +10,7 @@ from loader import dp, techno_dict, bot, base
 from utils.admin_router import admin_router
 from utils.users_router import users_router
 from keyboards.reply import admin_main, cancel_button, ready_button, skip_button, add_new_casting
-from keyboards.inline_admin import casting_bd_period, button_for_casting_admin, check_new_casting
+from keyboards.inline_admin import casting_bd_period, button_for_casting_admin, check_new_casting, user_action_menu
 from states import AdminStates, AddNewCasting
 from config import MAIN_GROUP
 
@@ -19,6 +19,107 @@ from config import MAIN_GROUP
 async def open_admin_panel(msg: Message):
     """Открываем админ-панель"""
     await msg.answer(f'Добрый день, {msg.from_user.first_name}!\nВыберете действие:', reply_markup=admin_main)
+
+# ====================
+# Работа с пользователями
+# ====================
+
+
+@admin_router.message(F.text == 'Подписчики')
+async def user_menu_open(msg: Message):
+    """Открываем меню взаимодействия с пользователями"""
+    await msg.answer('Выберете, что хотите сделать:', reply_markup=user_action_menu)
+
+
+@admin_router.callback_query(F.data.startswith('sub_'))
+async def sub_actions(callback: CallbackQuery, state: FSMContext):
+    """Запускаем действие с подпиской"""
+    if callback.data == 'sub_add':
+        await state.set_state(AdminStates.sub_add)
+        await callback.message.answer('Перешлите сообщение пользователя, которому хотите добавить подписку')
+    else:
+        await state.set_state(AdminStates.sub_del)
+        await callback.message.answer('Перешлите сообщение пользователя, которому хотите удалить подписку')
+
+
+@admin_router.message(AdminStates.sub_add)
+async def add_sub_user(msg: Message, state: FSMContext):
+    """Добавляем подписку пользователю через пересланное сообщение"""
+    if msg.forward_from:
+        await base.add_sub(msg.forward_from.id)
+        await msg.answer('Подписка добавлена')
+        await state.clear()
+
+
+@admin_router.message(AdminStates.sub_del)
+async def add_sub_user(msg: Message, state: FSMContext):
+    """Добавляем подписку пользователю через пересланное сообщение"""
+    if msg.forward_from:
+        await base.del_sub(msg.forward_from.id)
+        await msg.answer('Подписка удалена')
+        await state.clear()
+
+
+@admin_router.callback_query(F.data == 'show_user')
+async def show_user_settings(callback: CallbackQuery, state: FSMContext):
+    """Запускаем демонстрацию настроек пользователя"""
+    await callback.message.answer('Перешлите сообщение пользователя, чьи настройки хотите посмотреть:')
+    await state.set_state(AdminStates.show_user)
+
+
+# Словарь со значениями для формирования сообщений
+dict_for_msg_build = {
+        # Роли
+        'films': 'Кастинги в кино',
+        'series': 'Кастинг в сериал',
+        'ads': 'Кастинги в рекламу',
+        'theater': 'Театральные проекты',
+        'main_role': 'Главные и второстепенные роли',
+        'episode': 'Эпизоды',
+        'mass': 'Групповка/массовка',
+        'free': 'Некоммерческие проекты / фестивальные короткометражные фильмы молодых режиссёров',
+        # Образование
+        'vuz': 'Получил диплом. гос. образца',
+        'curs': 'Прошёл курсы актерского мастерства',
+        'none': 'Актерского образования нет',
+        # Опыт
+        'null': 'Опыта нет, я - новичок',
+        'ads_': 'Снималась(ся) только в рекламе / массовках/групповках',
+        'free_': 'Снималась(ся) в эпизодах / некоммерческих проектах',
+        'main': 'Есть второстепенные / главные роли в полнометражных фильмах/сериалах',
+        # Пол
+        'male': 'Мужской',
+        'female': 'Женский'
+    }
+
+
+@admin_router.message(AdminStates.show_user)
+async def show_user(msg: Message, state: FSMContext):
+    """Показываем настройки пользователя"""
+    if msg.forward_from:
+        if msg.forward_from.id in await base.get_users_id():
+            actor_data = (await base.get_actor_info(msg.forward_from.id))[0]
+            msg_text = (f'Текущие настройки профиля:\n\n'
+                        f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
+                        f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
+                        f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
+                        f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
+                        f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
+                        f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
+                        f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
+                        f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
+                        f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
+                        f'<b>Соц. сети:</b> {actor_data["social"]}\n'
+                        f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"].split("+")])}\n'
+                        f'<b>Минимальный гонорар:</b> {actor_data["fee"]}')
+            await msg.answer(msg_text)
+        await state.clear()
+
+
+
+# ====================
+# Работа с базой кастингов
+# ====================
 
 
 @admin_router.message(F.text == 'База данных кастингов')
@@ -31,11 +132,9 @@ async def open_casting_bd_menu(msg: Message, state: FSMContext):
 async def forming_casting_msg(casting_data, time_added, more_details=False):
     """Формирует сообщения с информацией о кастинге"""
     msg_text = (f'<i>Кастинг добавлен:</i> {time_added}\n\n'
-                # f'<b>Город кастинга:</b> {casting_data["search_city"]}\n'
                 f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
                 f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
                 f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n')
-                # f'<b>Место съемок:</b> {casting_data["filming_location"]}\n')
     if more_details:
         roles_info = 'Требуемые роли:\n\n'
         for role in casting_data['role_description']:
@@ -44,10 +143,7 @@ async def forming_casting_msg(casting_data, time_added, more_details=False):
             roles_info += (f'<b>Пол актера:</b> {role["actor_sex"]}\n'
                            f'<b>Возраст актера:</b> {role["age_restrictions"]}\n'
                            f'<b>Название роли:</b> {role["role_name"]}\n'
-                           # f'<b>Тип роли:</b> {role["role_type"]}\n'
                            f'<b>Описание роли:</b> {role["role_description"]}\n'
-                           # f'Дополнительные требования: {role["additional_requirements"]}\n'
-                           # f'Гонорар: {role["fee"]}\n'
                            f'<b>Дополнительные требования:</b> {additional_requirements}\n'
                            f'<b>Гонорар:</b> {fee}\n\n')
         msg_text += roles_info
@@ -137,6 +233,11 @@ async def remove_casting_from_db(callback: CallbackQuery):
     await base.remove_casting(callback.data.replace('rm_admin_', ''))
     await callback.message.delete()
     await callback.message.answer('Кастинг удален')
+
+
+# ====================
+# Добавление нового кастинга
+# ====================
 
 
 @users_router.message(F.text == 'Кастинг-директор, желающий разместить кастинг')

@@ -60,6 +60,10 @@ class BotBase:
                                      "(id SERIAL PRIMARY KEY,"
                                      "casting_text TEXT);")
 
+            # Таблица с подписками для "своих"
+            await connection.execute("CREATE TABLE IF NOT EXISTS subscription"
+                                     "(user_id BIGINT PRIMARY KEY);")
+
     # ====================
     # Операции с пользователями
     # ====================
@@ -171,3 +175,19 @@ class BotBase:
             result = await connection.fetch(f"SELECT casting_text FROM public.all_castings_texts LIMIT 200;")
             return result
 
+    # ====================
+    # Операции с подписками для "своих"
+    # ====================
+
+    async def add_sub(self, user_id):
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"INSERT INTO public.subscription (user_id) VALUES ({user_id});")
+
+    async def del_sub(self, user_id):
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"DELETE FROM public.subscription WHERE user_id = {user_id};")
+
+    async def get_all_sub(self):
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT * FROM public.subscription;")
+            return [i['user_id'] for i in result]

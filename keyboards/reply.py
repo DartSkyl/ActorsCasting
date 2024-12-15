@@ -7,9 +7,8 @@ from aiogram.utils.keyboard import ReplyKeyboardMarkup
 # ====================
 
 admin_main = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='База данных кастингов')],
+    [KeyboardButton(text='База данных кастингов'), KeyboardButton(text='Подписчики')],
     [KeyboardButton(text='Настройки парсера')],
-    # [KeyboardButton(text='Статистика')],
     [KeyboardButton(text='Добавить кастинг')]
 ], resize_keyboard=True)
 

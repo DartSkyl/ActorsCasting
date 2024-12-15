@@ -44,3 +44,10 @@ check_new_casting = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить описание кастинга', callback_data='new_casting_edit_text')],
     [InlineKeyboardButton(text='Изменить файл с текстом', callback_data='new_casting_edit_file')]
 ])
+
+user_action_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Добавить подписку пользователю', callback_data='sub_add')],
+    [InlineKeyboardButton(text='Удалить подписку пользователю', callback_data='sub_del')],
+    [InlineKeyboardButton(text='Посмотреть настройки пользователя', callback_data='show_user')],
+])
+

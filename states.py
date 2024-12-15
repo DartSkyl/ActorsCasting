@@ -66,6 +66,10 @@ class AdminStates(StatesGroup):
 
     second_text = State()
 
+    sub_add = State()
+    sub_del = State()
+    show_user = State()
+
 
 class AddNewCasting(StatesGroup):
     """Для добавления нового кастинга"""

@@ -244,6 +244,28 @@ async def review_all_data_after_setup(callback: CallbackQuery, state: FSMContext
     await callback.message.answer(msg_text, reply_markup=setup_keyboard)
 
 
+@users_router.message(Command('get_channels'))
+async def get_channels(msg: Message):
+    from pyrogram.enums.chat_type import ChatType  # noqa
+    from aiogram.types import FSInputFile
+    import os
+    ch = techno_dict['parser']._client.get_dialogs()  # noqa
+    with open('channels.txt', 'a', encoding='utf-8') as file:
+        last_id = 0
+        async for c in ch:
+            if last_id != c.chat.id:
+                if c.chat.type == ChatType.CHANNEL or c.chat.type == ChatType.SUPERGROUP or c.chat.type == ChatType.GROUP:
+                    if c.chat.username:
+                        file.write(f'https://t.me/{c.chat.username}\n')
+                    else:
+                        file.write(str(c.chat.title) + '\n')
+                last_id = c.chat.id  # так как он сам не остановится
+            else:
+                break
+    await msg.answer_document(document=FSInputFile('channels.txt'))
+    os.remove('channels.txt')
+
+
 @users_router.message(ActorsState.passport_age_setup)
 async def setup_passport_age_func(msg: Message, state: FSMContext):
     """Сохраняем изменения Возраст по паспорту"""

@@ -168,7 +168,6 @@ async def parser_start():
         """Сердце бота. Здесь мы отправляем сообщение ИИ, после чего отправляем результат актерам"""
         try:
             casting_text, pict = await get_contact_link(message)
-            print(casting_text, pict)
             casting_data, casting_config, casting_contacts, casting_rights, casting_prob, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
 
             # И публикуем в закрытом канале в качестве оригинала

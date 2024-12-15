@@ -4,6 +4,7 @@ from pydantic_core._pydantic_core import ValidationError
 from pyrogram import Client
 from pyrogram.types import Message
 from pyrogram.enums.message_media_type import MessageMediaType
+from pyrogram.enums.message_entity_type import MessageEntityType
 from pyrogram.errors.exceptions.not_acceptable_406 import ChatForwardsRestricted
 
 from aiogram.types.chat_member_member import ChatMemberMember
@@ -136,6 +137,23 @@ async def for_tests(casting_data, casting_config, casting_contacts, casting_righ
     await bot.send_message(chat_id=1004280953, text=msg_text)
 
 
+async def get_contact_link(cast_msg: Message):
+    """Иногда ссылки на форму заполнения заявок форматируют прямо в текст, по этому их нужно доставать от туда"""
+    if cast_msg.text:
+        for e in cast_msg.entities:
+            if e.type == MessageEntityType.TEXT_LINK:
+                if not e.url.startswith('https://t.me/'):
+                    cast_text = cast_msg.text.replace(cast_msg.text[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
+                    return cast_text, False
+    elif cast_msg.media == MessageMediaType.PHOTO:
+        for e in cast_msg.caption_entities:
+            if e.type == MessageEntityType.TEXT_LINK:
+                if not e.url.startswith('https://t.me/'):
+                    cast_text = cast_msg.caption.replace(cast_msg.caption[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
+                    return cast_text, True
+    return None, False
+
+
 async def parser_start():
     """Запускаем паресер"""
     app = await techno_dict['parser'].create_app()
@@ -148,19 +166,8 @@ async def parser_start():
     async def my_handler(client: Client, message: Message):
         """Сердце бота. Здесь мы отправляем сообщение ИИ, после чего отправляем результат актерам"""
         try:
-            pict = False
-            casting_text = message.text
-            # Если файл с описанием, то текст будет None. Значит возьмем его из caption
-            if message.media == MessageMediaType.PHOTO:
-                pict = True
-                casting_text = message.caption
+            casting_text, pict = await get_contact_link(message)
             casting_data, casting_config, casting_contacts, casting_rights, casting_prob, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
-            # if message.forward_from_chat:
-            #     chat_id, message_id = message.forward_from_chat.id, message.forward_from_message_id
-            # else:
-            #     chat_id, message_id = message.chat.id, message.id
-
-            # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
 
             # И публикуем в закрытом канале в качестве оригинала
             if not pict:
@@ -204,7 +211,7 @@ async def parser_start():
                                     try:
                                         b = [int(i) for i in role['age_restrictions'].split('-')]
                                         b.sort()
-                                        if a[0] <= b[0] <= a[1] or a[0] <= b[1] <= a[1]:  # noqa
+                                        if a[0] <= b[0] <= a[1] or a[0] <= b[1] <= a[1]:
                                             role_list.append(casting_data['role_description'][role_index - 1])
                                     except ValueError:
                                         if '+' in role['age_restrictions']:  # Если возрастные требования в формате n+

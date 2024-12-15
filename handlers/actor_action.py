@@ -103,8 +103,8 @@ async def add_to_favorites(callback: CallbackQuery):
 @users_router.message(F.text == 'Избранное')
 async def get_favorites_list(msg: Message):
     """Открываем список избранного"""
-    user_favorites = (await base.get_actor_favorites(msg.from_user.id))[0]['favorites']
     try:
+        user_favorites = (await base.get_actor_favorites(msg.from_user.id))[0]['favorites']
         user_favorites = user_favorites.split('&')
         for c_hash in user_favorites:
             casting = (await base.get_casting(c_hash))[0]

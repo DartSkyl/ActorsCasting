@@ -1,4 +1,3 @@
-import asyncio
 import json
 
 from aiogram.types import Message, CallbackQuery
@@ -7,7 +6,6 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ChatMember
 from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, MEMBER
-from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid
 
 from loader import base, techno_dict, dp, bot
 from utils.users_router import users_router

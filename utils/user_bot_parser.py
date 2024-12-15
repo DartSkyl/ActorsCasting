@@ -145,13 +145,14 @@ async def get_contact_link(cast_msg: Message):
                 if not e.url.startswith('https://t.me/'):
                     cast_text = cast_msg.text.replace(cast_msg.text[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
                     return cast_text, False
+        return cast_msg.text, False
     elif cast_msg.media == MessageMediaType.PHOTO:
         for e in cast_msg.caption_entities:
             if e.type == MessageEntityType.TEXT_LINK:
                 if not e.url.startswith('https://t.me/'):
                     cast_text = cast_msg.caption.replace(cast_msg.caption[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
                     return cast_text, True
-    return None, False
+        return cast_msg.caption, True
 
 
 async def parser_start():
@@ -167,6 +168,7 @@ async def parser_start():
         """Сердце бота. Здесь мы отправляем сообщение ИИ, после чего отправляем результат актерам"""
         try:
             casting_text, pict = await get_contact_link(message)
+            print(casting_text, pict)
             casting_data, casting_config, casting_contacts, casting_rights, casting_prob, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
 
             # И публикуем в закрытом канале в качестве оригинала

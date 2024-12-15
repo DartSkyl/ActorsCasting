@@ -1,3 +1,4 @@
+import os
 from datetime import date, timedelta
 import json
 
@@ -19,6 +20,13 @@ from config import MAIN_GROUP
 async def open_admin_panel(msg: Message):
     """Открываем админ-панель"""
     await msg.answer(f'Добрый день, {msg.from_user.first_name}!\nВыберете действие:', reply_markup=admin_main)
+
+
+@admin_router.message(Command('drop'))
+async def get_drop_messages(msg: Message):
+    from aiogram.types import FSInputFile
+    await msg.answer_document(document=FSInputFile('drop.log'))
+    os.remove('drop.log')
 
 # ====================
 # Работа с пользователями

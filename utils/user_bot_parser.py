@@ -240,7 +240,6 @@ async def parser_start():
                                          f'<b>Гонорар:</b> {fee if fee != "0" else "-"}\n\n')
                         if casting_contacts["contacts"] != 'комментарии':
                             msg_text += (f'<b>Контакты:</b> {casting_contacts["contacts"]}\n'
-                                         # f'<b>Заголовок письма:</b> {casting_contacts["title"]}\n'
                                          f'<b>Правила оформления заявки:</b> {casting_contacts["rules"]}\n')
                         else:
                             msg_text += (f'<b>Заявки оставлять в комментариях:</b> '

@@ -189,8 +189,8 @@ async def open_acc_setup_menu(msg: Message, state: FSMContext):
                     f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
                     f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
                     f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
-                    f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
-                    f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
+                    # f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
+                    # f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
                     f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                     f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                     f'<b>Соц. сети:</b> {actor_data["social"]}\n'
@@ -208,8 +208,8 @@ async def start_acc_setup(callback: CallbackQuery, state: FSMContext):
         'setup_playing_age': (
         ActorsState.playing_age_setup, 'Игровой возраст (диапазон, который вы можете играть через дефис)', None),
         'setup_education': (ActorsState.education_setup, 'Выберете образование', education_choice),
-        'setup_geo_location': (ActorsState.geo_location_setup, 'Введите город проживания', None),
-        'setup_contacts': (ActorsState.contacts_setup, 'Введите контактные данные (телефон, email через запятую)', None),
+        # 'setup_geo_location': (ActorsState.geo_location_setup, 'Введите город проживания', None),
+        # 'setup_contacts': (ActorsState.contacts_setup, 'Введите контактные данные (телефон, email через запятую)', None),
         'setup_agent_contact': (
         ActorsState.agent_contact_setup, 'Контактные данные вашего агента (телефон, email через запятую)', None),
         'setup_have_experience': (ActorsState.have_experience_setup, 'Какой у вас опыт?', experience_choice),
@@ -235,8 +235,8 @@ async def review_all_data_after_setup(callback: CallbackQuery, state: FSMContext
                 f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
                 f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
-                f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
-                f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
+                # f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
+                # f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
@@ -290,22 +290,22 @@ async def setup_playing_age_func(msg: Message, state: FSMContext):
         await msg.answer('Ошибка ввода!\nВведите диапазон, который вы можете играть через дефис')
 
 
-@users_router.message(ActorsState.geo_location_setup)
-async def setup_geo_location_func(msg: Message, state: FSMContext):
-    """Сохраняем изменения город проживания"""
-    await base.setup_param('geo_location', msg.text, msg.from_user.id)
-    await msg.answer('Изменения сохранены')
-    await state.clear()
-    await open_acc_setup_menu(msg, state)
-
-
-@users_router.message(ActorsState.contacts_setup)
-async def setup_contacts_func(msg: Message, state: FSMContext):
-    """Сохраняем изменения контактные данные"""
-    await base.setup_param('contacts', msg.text, msg.from_user.id)
-    await msg.answer('Изменения сохранены')
-    await state.clear()
-    await open_acc_setup_menu(msg, state)
+# @users_router.message(ActorsState.geo_location_setup)
+# async def setup_geo_location_func(msg: Message, state: FSMContext):
+#     """Сохраняем изменения город проживания"""
+#     await base.setup_param('geo_location', msg.text, msg.from_user.id)
+#     await msg.answer('Изменения сохранены')
+#     await state.clear()
+#     await open_acc_setup_menu(msg, state)
+#
+#
+# @users_router.message(ActorsState.contacts_setup)
+# async def setup_contacts_func(msg: Message, state: FSMContext):
+#     """Сохраняем изменения контактные данные"""
+#     await base.setup_param('contacts', msg.text, msg.from_user.id)
+#     await msg.answer('Изменения сохранены')
+#     await state.clear()
+#     await open_acc_setup_menu(msg, state)
 
 
 @users_router.message(ActorsState.agent_contact_setup)

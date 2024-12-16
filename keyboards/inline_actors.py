@@ -1,4 +1,4 @@
-from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup
 from config import PAYWALL_URL
 
 

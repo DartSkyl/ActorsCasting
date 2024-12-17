@@ -224,7 +224,6 @@ async def get_casting_data(casting_msg: str):
             break
         except Exception as e:
             print(e)
-    print(check_response['it_casting'])
     if check_response['it_casting']:
 
         # А это для создания ID

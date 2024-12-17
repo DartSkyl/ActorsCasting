@@ -230,24 +230,25 @@ async def get_casting_data(casting_msg: str):
         str_for_hashing = casting_msg[:100].encode()
         casting_hash = hashlib.sha256(str_for_hashing).hexdigest()
         if await uniqueness_check(casting_msg):  # Для учета уникальности кастингов будем использовать индекс Жаккара
+            # Сначала достаем всю информацию о кастинге из сообщения, разобьем в два этапа,
+            # что бы уменьшить вероятность ошибки
+            while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
+                try:
+                    project_chain = project_prompt | model | project_parser
+                    casting_data_1 = await project_chain.ainvoke({'input': casting_msg,
+                                                                  'format_instructions': project_parser.get_format_instructions()}
+                                                                 )
+                    break
+                except Exception as e:
+                    # Ингода, ошибка вылазит из лишней запятой в конце.
+                    # С помощью следующей функции попробуем сократить последствия данной ошибки
+                    casting_data_1 = await extract_json_from_string(str(e))
+                    if casting_data_1:
+                        break
+                    print(e)
             while True:  # Иногда вылазит ошибка KeyError: 'fee', а это нам нельзя
                 try:
-                    # Сначала достаем всю информацию о кастинге из сообщения, разобьем в два этапа,
-                    # что бы уменьшить вероятность ошибки
-                    while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
-                        try:
-                            project_chain = project_prompt | model | project_parser
-                            casting_data_1 = await project_chain.ainvoke({'input': casting_msg,
-                                                                'format_instructions': project_parser.get_format_instructions()}
-                                                                         )
-                            break
-                        except Exception as e:
-                            # Ингода, ошибка вылазит из лишней запитой в конце.
-                            # С помощью следующей функции попробуем сократить последствия данной ошибки
-                            casting_data_1 = await extract_json_from_string(str(e))
-                            if casting_data_1:
-                                break
-                            print(e)
+
                     while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
                         try:
                             chain = prompt | model | parser
@@ -255,7 +256,7 @@ async def get_casting_data(casting_msg: str):
                                                                 'format_instructions': parser.get_format_instructions()})
                             break
                         except Exception as e:
-                            # Ингода, ошибка вылазит из лишней запитой в конце.
+                            # Ингода, ошибка вылазит из лишней запятой в конце.
                             # С помощью следующей функции попробуем сократить последствия данной ошибки
                             casting_data = await extract_json_from_string(str(e))
                             if casting_data:
@@ -287,7 +288,7 @@ async def get_casting_data(casting_msg: str):
                                                               'format_instructions': parser_3.get_format_instructions()})
                     break
                 except Exception as e:
-                    # Ингода, ошибка вылазит из лишней запитой в конце.
+                    # Ингода, ошибка вылазит из лишней запятой в конце.
                     # С помощью следующей функции попробуем сократить последствия данной ошибки
                     casting_contacts = await extract_json_from_string(str(e))
                     if casting_contacts:
@@ -301,7 +302,7 @@ async def get_casting_data(casting_msg: str):
                                                               'format_instructions': prob_parser.get_format_instructions()})
                     break
                 except Exception as e:
-                    # Ингода, ошибка вылазит из лишней запитой в конце.
+                    # Ингода, ошибка вылазит из лишней запятой в конце.
                     # С помощью следующей функции попробуем сократить последствия данной ошибки
                     casting_prob = await extract_json_from_string(str(e))
                     if casting_prob:
@@ -318,7 +319,7 @@ async def get_casting_data(casting_msg: str):
                                                                      'format_instructions': rights_parser.get_format_instructions()})
                         break
                     except Exception as e:
-                        # Ингода, ошибка вылазит из лишней запитой в конце.
+                        # Ингода, ошибка вылазит из лишней запятой в конце.
                         # С помощью следующей функции попробуем сократить последствия данной ошибки
                         casting_rights = await extract_json_from_string(str(e))
                         if casting_rights:

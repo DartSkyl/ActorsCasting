@@ -124,7 +124,6 @@ async def show_user(msg: Message, state: FSMContext):
         await state.clear()
 
 
-
 # ====================
 # Работа с базой кастингов
 # ====================
@@ -267,6 +266,28 @@ async def add_new_casting_from_admin_and_director(msg: Message, state: FSMContex
 - Гонорар
 - Почта куда отправлять заявки (или ссылка на канал кастинга, если заявки принимаются в комментариях)"""
     await msg.answer(msg_text, reply_markup=cancel_button)
+    await state.set_state(AddNewCasting.description)
+
+
+@users_router.callback_query(F.data == 'director')
+async def add_new_casting_from_director(callback: CallbackQuery, state: FSMContext):
+    """Начинаем добавления нового кастинга от админа или кастинг директора"""
+    await callback.answer()
+    msg_text = """
+    Введите описание кастинга. Убедитесь, что оно содержит следующее:
+    - Город, где ищут актёра
+    - Название проекта
+    - Тип проекта (фильм, сериал, реклама, театр, некоммерческий проект и т.д.)
+    - Даты съемок
+    - Место съемок
+    - Требуемый пол
+    - Возрастные ограничения
+    - Тип роли
+    - Описание роли
+    - Дополнительные требования
+    - Гонорар
+    - Почта куда отправлять заявки (или ссылка на канал кастинга, если заявки принимаются в комментариях)"""
+    await callback.message.answer(msg_text, reply_markup=cancel_button)
     await state.set_state(AddNewCasting.description)
 
 

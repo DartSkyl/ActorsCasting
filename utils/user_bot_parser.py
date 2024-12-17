@@ -138,18 +138,20 @@ async def for_tests(casting_data, casting_config, casting_contacts, casting_righ
 async def get_contact_link(cast_msg: Message):
     """Иногда ссылки на форму заполнения заявок форматируют прямо в текст, по этому их нужно доставать от туда"""
     if cast_msg.text:
-        for e in cast_msg.entities:
-            if e.type == MessageEntityType.TEXT_LINK:
-                if not e.url.startswith('https://t.me/'):
-                    cast_text = cast_msg.text.replace(cast_msg.text[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
-                    return cast_text, False
+        if cast_msg.entities:
+            for e in cast_msg.entities:
+                if e.type == MessageEntityType.TEXT_LINK:
+                    if not e.url.startswith('https://t.me/'):
+                        cast_text = cast_msg.text.replace(cast_msg.text[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
+                        return cast_text, False
         return cast_msg.text, False
     elif cast_msg.media == MessageMediaType.PHOTO:
-        for e in cast_msg.caption_entities:
-            if e.type == MessageEntityType.TEXT_LINK:
-                if not e.url.startswith('https://t.me/'):
-                    cast_text = cast_msg.caption.replace(cast_msg.caption[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
-                    return cast_text, True
+        if cast_msg.caption_entities:
+            for e in cast_msg.caption_entities:
+                if e.type == MessageEntityType.TEXT_LINK:
+                    if not e.url.startswith('https://t.me/'):
+                        cast_text = cast_msg.caption.replace(cast_msg.caption[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
+                        return cast_text, True
         return cast_msg.caption, True
 
 
@@ -158,8 +160,8 @@ async def parser_start():
     app = await techno_dict['parser'].create_app()
     # Запускаем парсер
     await techno_dict['parser'].switch_status()
-    techno_dict['parser_id'] = (await app.get_me()).id
-    await bot.send_message(chat_id=techno_dict['parser_id'], text='Hi!')
+    # techno_dict['parser_id'] = (await app.get_me()).id
+    # await bot.send_message(chat_id=techno_dict['parser_id'], text='Hi!')
 
     @app.on_message()
     async def my_handler(client: Client, message: Message):
@@ -175,7 +177,7 @@ async def parser_start():
                 f = await app.download_media(message)
                 m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
                 os.remove(f)
-            # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
+            await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
             try:
                 # Сохраняем в базу
                 await base.add_new_casting(

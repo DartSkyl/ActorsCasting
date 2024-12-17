@@ -7,6 +7,10 @@ first_start = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Кастинг-директор (разместить кастинг)', callback_data='director')]
 ])
 
+cycle_for_direct = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Да, с радостью 😊', callback_data='director')]
+])
+
 first_answer = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Да, было бы здорово!', callback_data='reg_start')],
     [InlineKeyboardButton(text='А что, так можно было?', callback_data='reg_start')]

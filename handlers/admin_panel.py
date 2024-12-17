@@ -12,8 +12,9 @@ from utils.admin_router import admin_router
 from utils.users_router import users_router
 from keyboards.reply import admin_main, cancel_button, ready_button, skip_button, add_new_casting
 from keyboards.inline_admin import casting_bd_period, button_for_casting_admin, check_new_casting, user_action_menu
+from keyboards.inline_actors import cycle_for_direct
 from states import AdminStates, AddNewCasting
-from config import MAIN_GROUP
+from config import MAIN_GROUP, ADMINS
 
 
 @admin_router.message(Command('admin'))
@@ -286,7 +287,7 @@ async def add_new_casting_from_director(callback: CallbackQuery, state: FSMConte
     - Описание роли
     - Дополнительные требования
     - Гонорар
-    - Почта куда отправлять заявки (или ссылка на канал кастинга, если заявки принимаются в комментариях)"""
+    - Почта куда отправлять заявки (или другой контакт)"""
     await callback.message.answer(msg_text, reply_markup=cancel_button)
     await state.set_state(AddNewCasting.description)
 
@@ -364,8 +365,10 @@ async def add_new_casting_func(msg: Message, state: FSMContext):
         await bot.send_document(chat_id=MAIN_GROUP, document=casting_data['file_id'])
     await msg.answer('Кастинг успешно опубликован!')
     await state.clear()
-    from handlers.actors_registration import start_func
-    await start_func(msg)
+    if msg.from_user.id not in ADMINS:
+        await msg.answer('Разместить ещё один кастинг?', reply_markup=cycle_for_direct)
+    else:
+        await open_admin_panel(msg)
 
 
 @users_router.message(AddNewCasting.e_description)

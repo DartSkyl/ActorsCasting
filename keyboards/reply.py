@@ -21,8 +21,8 @@ add_new_casting = ReplyKeyboardMarkup(keyboard=[
 # ====================
 
 pay_choice = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='Подписка на 30 дней - 599₽')],
-    [KeyboardButton(text='Пробная неделя - 299₽')]
+    [KeyboardButton(text='Подписка на месяц дней - 599₽')],
+    [KeyboardButton(text='Подписка на 3 месяца - 1370₽')]
 ], one_time_keyboard=True, resize_keyboard=True)
 
 

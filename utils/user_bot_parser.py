@@ -246,10 +246,8 @@ async def parser_start():
                                 )
                             )
             except TypeError as e:  # Значит не кастинг
-                print(e)
                 pass
             except UniqueViolationError as e:  # Проскачил уже имеющийся в базе
-                print(e)
                 pass
             except Exception as e:
                 print(e)

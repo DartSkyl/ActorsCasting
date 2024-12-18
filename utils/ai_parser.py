@@ -221,6 +221,7 @@ async def get_casting_data(casting_msg: str):
         str_for_hashing = casting_msg[:100].encode()
         casting_hash = hashlib.sha256(str_for_hashing).hexdigest()
         if await uniqueness_check(casting_msg):  # Для учета уникальности кастингов будем использовать индекс Жаккара
+            await base.add_new_text(casting_msg)
             # Сначала достаем всю информацию о кастинге из сообщения, разобьем в два этапа,
             # что бы уменьшить вероятность ошибки
             while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
@@ -316,7 +317,6 @@ async def get_casting_data(casting_msg: str):
                         if casting_rights:
                             break
                         print(e)
-            await base.add_new_text(casting_msg)
             # Далее будем использовать обрезанную часть хэша
             return casting_data, casting_config, casting_contacts, casting_rights, casting_prob, casting_hash[:10]
         else:

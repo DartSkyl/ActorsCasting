@@ -266,7 +266,7 @@ async def add_new_casting_from_admin_and_director(msg: Message, state: FSMContex
 <b>Дополнительные требования:</b>
 <b>Гонорар:</b>
     
-    <b>Почта куда отправлять заявки (или другой контакт):</b>"""
+<b>Почта куда отправлять заявки (или другой контакт):</b>"""
     await msg.answer(msg_text, reply_markup=cancel_button)
     await msg.answer('Скопируйте форму выше и заполните!')
     await state.set_state(AddNewCasting.description)
@@ -290,7 +290,7 @@ async def add_new_casting_from_director(callback: CallbackQuery, state: FSMConte
 <b>Описание роли:</b>
 <b>Дополнительные требования:</b>
 <b>Гонорар:</b>
-    <b>Почта куда отправлять заявки (или другой контакт):</b>"""
+<b>Почта куда отправлять заявки (или другой контакт):</b>"""
     await callback.message.answer(msg_text, reply_markup=cancel_button)
     await callback.message.answer('Скопируйте форму выше и заполните!')
     await state.set_state(AddNewCasting.description)

@@ -148,7 +148,7 @@ async def parser_start():
             # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
             try:
                 # Сохраняем в базу
-                print('try save... ', end='')
+                print(f'try save {casting_hash} ... ', end='')
                 await base.add_new_casting(
                     casting_hash=casting_hash,
                     casting_data=json.dumps(casting_data),

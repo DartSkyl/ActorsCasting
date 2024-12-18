@@ -4,7 +4,7 @@ from aiogram.types import BotCommand
 
 from utils.admin_router import admin_router
 from utils.users_router import users_router
-from utils.user_bot_parser import parser_load
+from utils.user_bot_parser import parser_load, parser_start
 from utils.first_contact import FirstContact
 import handlers  # noqa
 from loader import dp, bot, db_connect, get_bot_id, techno_dict
@@ -29,6 +29,7 @@ async def start_up():
         BotCommand(command='support', description='Контакт службы поддержки'),
         BotCommand(command='settings', description='Настройки аккаунта')
     ])
+    await parser_start()
     with open('bot.log', 'a') as log_file:
         log_file.write(f'\n========== New bot session {datetime.datetime.now()} ==========\n\n')
     print('Стартуем')

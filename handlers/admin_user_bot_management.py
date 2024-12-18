@@ -21,6 +21,15 @@ async def open_user_bot_menu(msg: Message):
     await msg.answer('Выберете действие:', reply_markup=add_user_bot)
 
 
+@admin_router.message(Command('/restart'))
+@admin_router.message(F.text == 'Настройки парсера')
+async def restart_bot(msg: Message):
+    """Для непредвиденных случаев"""
+    import os
+    await msg.answer('Перезагрузка...')
+    os.system('systemctl restart casting.service')
+
+
 @admin_router.callback_query(F.data.startswith('parser_'))
 async def parser_start_func(callback: CallbackQuery):
     """Запускаем парсер"""

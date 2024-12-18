@@ -190,6 +190,8 @@ async def parser_start():
             except PostgresSyntaxError as ex:
                 with open('psql_er.log', 'a', encoding='utf-8') as file:
                     file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n{str(ex)}\n==================\n\n')
+            except Exception as e:
+                print(e)
 
             # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
             all_actors = await base.get_all_actors()

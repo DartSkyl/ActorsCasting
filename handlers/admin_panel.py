@@ -267,8 +267,8 @@ async def add_new_casting_from_admin_and_director(msg: Message, state: FSMContex
     <b>Гонорар:</b>
     
     <b>Почта куда отправлять заявки (или другой контакт):</b>"""
-    await msg.answer('Скопируйте форму выше и заполните!')
     await msg.answer(msg_text, reply_markup=cancel_button)
+    await msg.answer('Скопируйте форму выше и заполните!')
     await state.set_state(AddNewCasting.description)
 
 

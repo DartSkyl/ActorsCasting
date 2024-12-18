@@ -189,6 +189,7 @@ async def parser_start():
                         casting_origin=f'https://t.me/{message.chat.username}/{message.id}',
                         origin_for_user=f'{m.message_id}-{message.chat.username}-{message.id}'
                     )
+                    print('Success')
                 except PostgresSyntaxError as ex:
                     with open('psql_er.log', 'a', encoding='utf-8') as file:
                         file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n{str(ex)}\n==================\n\n')

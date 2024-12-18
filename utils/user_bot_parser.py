@@ -281,6 +281,8 @@ async def parser_start():
                 pass
             except UniqueViolationError:  # Проскачил уже имеющийся в базе
                 pass
+            except Exception as e:
+                print(e)
 
 
 async def parser_stop():

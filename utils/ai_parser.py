@@ -85,9 +85,7 @@ class ItCastingOrNot(BaseModel):
 
 class ProbeText(BaseModel):
     """Описание ответа с текстом для самопроб"""
-    text: str = Field(default='Отсутствует', description='Текст для самопроб для актеров. Содержит описание сцены и диалог '
-                                                         'или монолог. Если и есть, то только после фразы "текст для самопроб" '
-                                                         'или похожей по смыслу фразы.')
+    text: bool = Field(description='Упоминается ли в сообщении текст для самопроб или самопробы')
 
 
 # Промпт для извлечения информации о проекте
@@ -160,9 +158,7 @@ rights_prompt = PromptTemplate.from_template(rights_prompt_text)
 rights_parser = JsonOutputParser(pydantic_object=AdvertisingRights)
 
 # Промпт для проверки на наличие текста для самопроб
-prob_prompt_text = """Извлекайте только текст, который явно маркирован или отмечен как текст для самопробы. 
-Игнорируйте все описания ролей и другие информационные блоки. Фокусируйтесь исключительно на тексте, который может 
-быть использован актерами для прохождения самопроб. Если такого текста в сообщении нет, то просто скажи "Отсутствует"
+prob_prompt_text = """Проверь сообщение на наличие упоминаний самопроб или текст для самопроб
 Отвечай как описано в подсказке по форматированию 
 {format_instructions}. Сообщение с кастингом: {input}"""
 prob_prompt = PromptTemplate.from_template(prob_prompt_text)
@@ -203,18 +199,11 @@ async def uniqueness_check(cast_text):
 async def get_casting_data(casting_msg: str):
     """Первая цепочка проверяет, содержит ли сообщение информацию о кастинге. Если содержит, то вторая достает ее и
     группирует, а третья формирует конфигурации по этому кастингу, четвертая достает информацию по контактам и правилам
-    оформления заявок, пятая достает права из кастингов для рекламы. Каждый этап взаимодействия с ИИ обернут в
-    бесконечный цикл While True, а внутри try except. Сделано это потому, что очень часто вылазит ошибка output parser
-    error на ровном месте"""
+    оформления заявок, пятая достает права из кастингов для рекламы."""
     # Проверяем сообщение на наличие кастинга
-    while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
-        try:
-            check_chain = check_prompt | model | check_parser
-            check_response = await check_chain.ainvoke({'input': casting_msg,
-                                                        'format_instructions': check_parser.get_format_instructions()})
-            break
-        except Exception as e:
-            print(e)
+    check_chain = check_prompt | model | check_parser
+    check_response = await check_chain.ainvoke({'input': casting_msg,
+                                                'format_instructions': check_parser.get_format_instructions()})
     if check_response['it_casting']:
 
         # А это для создания ID
@@ -224,99 +213,71 @@ async def get_casting_data(casting_msg: str):
             await base.add_new_text(casting_msg)
             # Сначала достаем всю информацию о кастинге из сообщения, разобьем в два этапа,
             # что бы уменьшить вероятность ошибки
-            while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
-                try:
-                    project_chain = project_prompt | model | project_parser
-                    casting_data_1 = await project_chain.ainvoke({'input': casting_msg,
-                                                                  'format_instructions': project_parser.get_format_instructions()}
-                                                                 )
-                    break
-                except Exception as e:
-                    # Ингода, ошибка вылазит из лишней запятой в конце.
-                    # С помощью следующей функции попробуем сократить последствия данной ошибки
-                    casting_data_1 = await extract_json_from_string(str(e))
-                    if casting_data_1:
-                        break
-                    print(e)
-            while True:  # Иногда вылазит ошибка KeyError: 'fee', а это нам нельзя
-                try:
+            try:
+                project_chain = project_prompt | model | project_parser
+                casting_data_1 = await project_chain.ainvoke({'input': casting_msg,
+                                                              'format_instructions': project_parser.get_format_instructions()}
+                                                             )
+            except Exception as e:
+                # Ингода, ошибка вылазит из лишней запятой в конце.
+                # С помощью следующей функции попробуем сократить последствия данной ошибки
+                casting_data_1 = await extract_json_from_string(str(e))
 
-                    while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
-                        try:
-                            chain = prompt | model | parser
-                            casting_data = await chain.ainvoke({'input': casting_msg,
-                                                                'format_instructions': parser.get_format_instructions()})
-                            break
-                        except Exception as e:
-                            # Ингода, ошибка вылазит из лишней запятой в конце.
-                            # С помощью следующей функции попробуем сократить последствия данной ошибки
-                            casting_data = await extract_json_from_string(str(e))
-                            if casting_data:
-                                break
-                            print(e)
-                    casting_config = []
-                    casting_data.update(casting_data_1)
-                    # Из получившейся информации нужно сформировать сообщение для формирования конфигураций
-                    for role in casting_data['role_description']:
-                        input_text_for_prompt_2 = f'Тип проекта: {casting_data["project_type"]}\n'
-                        input_text_for_prompt_2 += (f'Пол актера: {role["actor_sex"]}\n'
-                                                    f'Возраст актера:{role["age_restrictions"]}\n'
-                                                    f'Гонорар: {role["fee"]}')
-                        while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
-                            try:
-                                chain_2 = prompt_2 | model | parser_2
-                                casting_config.append(await chain_2.ainvoke({'input': input_text_for_prompt_2,
-                                                                             'format_instructions': parser_2.get_format_instructions()}))
-                                break
-                            except Exception as e:
-                                print(e)
-                    break
-                except KeyError as e:
-                    print(e)
-            while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
-                try:
-                    chain_3 = prompt_3 | model | parser_3
-                    casting_contacts = await chain_3.ainvoke({'input': casting_msg,
-                                                              'format_instructions': parser_3.get_format_instructions()})
-                    break
-                except Exception as e:
-                    # Ингода, ошибка вылазит из лишней запятой в конце.
-                    # С помощью следующей функции попробуем сократить последствия данной ошибки
-                    casting_contacts = await extract_json_from_string(str(e))
-                    if casting_contacts:
+            try:
+                chain = prompt | model | parser
+                casting_data = await chain.ainvoke({'input': casting_msg,
+                                                    'format_instructions': parser.get_format_instructions()})
+            except Exception as e:
+                # Ингода, ошибка вылазит из лишней запятой в конце.
+                # С помощью следующей функции попробуем сократить последствия данной ошибки
+                casting_data = await extract_json_from_string(str(e))
+            casting_config = []
+            casting_data.update(casting_data_1)
+            # Из получившейся информации нужно сформировать сообщение для формирования конфигураций
+            for role in casting_data['role_description']:
+                input_text_for_prompt_2 = f'Тип проекта: {casting_data["project_type"]}\n'
+                input_text_for_prompt_2 += (f'Пол актера: {role["actor_sex"]}\n'
+                                            f'Возраст актера:{role["age_restrictions"]}\n'
+                                            f'Гонорар: {role["fee"]}')
+                while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
+                    try:
+                        chain_2 = prompt_2 | model | parser_2
+                        casting_config.append(await chain_2.ainvoke({'input': input_text_for_prompt_2,
+                                                                     'format_instructions': parser_2.get_format_instructions()}))
                         break
-                    print(e)
+                    except Exception as e:
+                        print(e)
 
-            while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
-                try:
-                    probe_chain = prob_prompt | model | prob_parser
-                    casting_prob = await probe_chain.ainvoke({'input': casting_msg,
-                                                              'format_instructions': prob_parser.get_format_instructions()})
-                    break
-                except Exception as e:
-                    # Ингода, ошибка вылазит из лишней запятой в конце.
-                    # С помощью следующей функции попробуем сократить последствия данной ошибки
-                    casting_prob = await extract_json_from_string(str(e))
-                    if casting_prob:
-                        break
-                    print(e)
+            try:
+                chain_3 = prompt_3 | model | parser_3
+                casting_contacts = await chain_3.ainvoke({'input': casting_msg,
+                                                          'format_instructions': parser_3.get_format_instructions()})
+            except Exception as e:
+                # Ингода, ошибка вылазит из лишней запятой в конце.
+                # С помощью следующей функции попробуем сократить последствия данной ошибки
+                casting_contacts = await extract_json_from_string(str(e))
+
+            try:  # Проверяем наличие текста для самопроб
+                probe_chain = prob_prompt | model | prob_parser
+                casting_prob = await probe_chain.ainvoke({'input': casting_msg,
+                                                          'format_instructions': prob_parser.get_format_instructions()})
+            except Exception as e:
+                # Ингода, ошибка вылазит из лишней запятой в конце.
+                # С помощью следующей функции попробуем сократить последствия данной ошибки
+                casting_prob = await extract_json_from_string(str(e))
 
             casting_rights = None
             # Если это реклама, то извлечем информацию о правах
             if casting_config[0]['project_type'] == 'ads':
-                while True:  # Так как ошибка output parser очень любит вылазить на ровном месте
-                    try:
-                        rights_chain = rights_prompt | model | rights_parser
-                        casting_rights = await rights_chain.ainvoke({'input': casting_msg,
-                                                                     'format_instructions': rights_parser.get_format_instructions()})
-                        break
-                    except Exception as e:
-                        # Ингода, ошибка вылазит из лишней запятой в конце.
-                        # С помощью следующей функции попробуем сократить последствия данной ошибки
-                        casting_rights = await extract_json_from_string(str(e))
-                        if casting_rights:
-                            break
-                        print(e)
+                try:
+                    rights_chain = rights_prompt | model | rights_parser
+                    casting_rights = await rights_chain.ainvoke({'input': casting_msg,
+                                                                 'format_instructions': rights_parser.get_format_instructions()})
+                except Exception as e:
+                    # Ингода, ошибка вылазит из лишней запятой в конце.
+                    # С помощью следующей функции попробуем сократить последствия данной ошибки
+                    casting_rights = await extract_json_from_string(str(e))
+
             # Далее будем использовать обрезанную часть хэша
             return casting_data, casting_config, casting_contacts, casting_rights, casting_prob, casting_hash[:10]
         else:

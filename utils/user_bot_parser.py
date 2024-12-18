@@ -149,6 +149,7 @@ async def parser_start():
                 try:
                     # Сохраняем в базу
                     print(f'try save {casting_hash} ... ', end='')
+                    print(f'{casting_text[:100]}')
                     await base.add_new_casting(
                         casting_hash=casting_hash,
                         casting_data=json.dumps(casting_data),
@@ -223,10 +224,9 @@ async def parser_start():
 
                             if casting_rights:
                                 msg_text += f'<b>Права:</b> {casting_rights["rights"]}\n'
-                            if casting_prob['text'] != 'Отсутствует':
-                                msg_text += f'<b>Текст для проб:</b> {casting_prob["text"]}\n'
-                            else:
-                                msg_text += f'<b>Текст для проб:</b> -\n'
+
+                            msg_text += f'<b>Текст для проб:</b> {"есть" if casting_prob["text"] else "-"}\n'
+
                             await bot.send_message(
                                 chat_id=actor['user_id'],
                                 text=msg_text,

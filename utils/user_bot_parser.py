@@ -182,6 +182,7 @@ async def parser_start():
                 # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
                 try:
                     # Сохраняем в базу
+                    print('try save... ', end='')
                     await base.add_new_casting(
                         casting_hash=casting_hash,
                         casting_data=json.dumps(casting_data),
@@ -189,6 +190,7 @@ async def parser_start():
                         casting_origin=f'https://t.me/{message.chat.username}/{message.id}',
                         origin_for_user=f'{m.message_id}-{message.chat.username}-{message.id}'
                     )
+                    print('success')
                 except PostgresSyntaxError as ex:
                     with open('psql_er.log', 'a', encoding='utf-8') as file:
                         file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n{str(ex)}\n==================\n\n')

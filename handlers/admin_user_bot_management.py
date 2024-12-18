@@ -22,7 +22,6 @@ async def open_user_bot_menu(msg: Message):
 
 
 @admin_router.message(Command('/restart'))
-@admin_router.message(F.text == 'Настройки парсера')
 async def restart_bot(msg: Message):
     """Для непредвиденных случаев"""
     import os

@@ -21,7 +21,7 @@ async def open_user_bot_menu(msg: Message):
     await msg.answer('Выберете действие:', reply_markup=add_user_bot)
 
 
-@admin_router.message(Command('/restart'))
+@admin_router.message(Command('restart'))
 async def restart_bot(msg: Message):
     """Для непредвиденных случаев"""
     import os

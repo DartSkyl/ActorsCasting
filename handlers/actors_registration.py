@@ -255,7 +255,10 @@ async def registry_new_actor(callback: CallbackQuery, state: FSMContext):
     )
     await callback.message.answer(
         'Отлично! Теперь я понимаю, какие кастинги тебе подойдут и готов мониторить и присылать их '
-        'тебе и днём и ночью.\nВыбери подходящий вариант нашего дальнейшего взаимодействия:',
+        'тебе и днём и ночью.\nВыбери подходящий вариант нашего дальнейшего взаимодействия:\n'
+        '<blockquote> приобретая пакет, вы принимаете <a href="https://disk.yandex.ru/d/y1EoKJjeqvqv2w">'
+        'оферту</a> и соглашаетесь с '
+        '<a href="https://disk.yandex.ru/d/rUAPTKcfIRVegQ">политикой обработки персональных данных</a></blockquote>',
         reply_markup=pay_choice)
     await techno_dict['first_contact'].wait_answer(user_id=str(callback.from_user.id), message=callback.message)
     await state.clear()

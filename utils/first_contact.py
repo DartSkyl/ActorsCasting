@@ -12,7 +12,10 @@ async def send_message(msg: Message, user_id):
                 'кастинг-директора публикуют проекты, которых нет в открытом доступе. А это значит, что ты первый '
                 'о них узнаешь.')
     await msg.answer(msg_text)
-    await msg.answer('Выбери подходящий вариант нашего дальнейшего взаимодействия:',
+    await msg.answer('Выбери подходящий вариант нашего дальнейшего взаимодействия:\n'
+                     '<blockquote> приобретая пакет, вы принимаете <a href="https://disk.yandex.ru/d/y1EoKJjeqvqv2w">'
+                     'оферту</a> и соглашаетесь с '
+                     '<a href="https://disk.yandex.ru/d/rUAPTKcfIRVegQ">политикой обработки персональных данных</a></blockquote>',
                      reply_markup=pay_choice)
     await techno_dict['first_contact'].remove_job(user_id)
 

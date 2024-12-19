@@ -176,6 +176,8 @@ async def extract_json_from_string(input_string):
         json_data = json.loads(input_string)
         return json_data
     except json.JSONDecodeError as e:
+        with open('json.log', 'a', encoding='utf-8') as file:
+            file.write(str(input_string))
         print(f"Error decoding JSON: {e}")
         return None
 

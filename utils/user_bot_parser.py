@@ -145,7 +145,7 @@ async def parser_start():
                     f = await app.download_media(message)
                     m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
                     os.remove(f)
-                await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
+                # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
                 try:
                     # Сохраняем в базу
                     print(f'try save {casting_hash} ... ', end='')

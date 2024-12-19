@@ -228,7 +228,7 @@ async def parser_start():
 
                             await bot.send_message(
                                 chat_id=actor['user_id'],
-                                text=msg_text,
+                                text=msg_text.replace('male', 'Мужской').replace('female', 'Женский'),
                                 reply_markup=await button_for_casting(
                                     message_id=f'{m.message_id}-{message.chat.username}-{message.id}',
                                     casting_hash=casting_hash

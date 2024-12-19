@@ -158,7 +158,8 @@ rights_prompt = PromptTemplate.from_template(rights_prompt_text)
 rights_parser = JsonOutputParser(pydantic_object=AdvertisingRights)
 
 # Промпт для проверки на наличие текста для самопроб
-prob_prompt_text = """Проверь сообщение на наличие упоминаний самопроб или текст для самопроб
+prob_prompt_text = """Проверь сообщение на наличие упоминаний самопроб или текст для самопроб. 
+Простое описание сцен или сюжета игнорируй.
 Отвечай как описано в подсказке по форматированию 
 {format_instructions}. Сообщение с кастингом: {input}"""
 prob_prompt = PromptTemplate.from_template(prob_prompt_text)

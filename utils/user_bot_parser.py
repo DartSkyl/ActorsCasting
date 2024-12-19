@@ -149,7 +149,6 @@ async def parser_start():
                 try:
                     # Сохраняем в базу
                     print(f'try save {casting_hash} ... ', end='')
-                    print(f'{casting_text[:100]}')
                     await base.add_new_casting(
                         casting_hash=casting_hash,
                         casting_data=json.dumps(casting_data),
@@ -173,7 +172,8 @@ async def parser_start():
                         for role in casting_config:
                             role_index += 1
                             # Сначала проверяем пол актера
-                            if actor['sex'] == role['actor_sex']:
+                            if actor['sex'] in role['actor_sex'].split('/'):
+                                print(actor['sex'], role['actor_sex'].split('/'))
                                 # Проверяем, подходит ли проект актеру
                                 if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
                                     # Проверяем, подходит гонорар

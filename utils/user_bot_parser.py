@@ -145,7 +145,7 @@ async def parser_start():
                     f = await app.download_media(message)
                     m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
                     os.remove(f)
-                # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
+                await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
                 try:
                     # Сохраняем в базу
                     print(f'try save {casting_hash} ... ', end='')
@@ -172,8 +172,7 @@ async def parser_start():
                         for role in casting_config:
                             role_index += 1
                             # Сначала проверяем пол актера
-                            if actor['sex'] in role['actor_sex'].split('/'):
-                                print(actor['sex'], role['actor_sex'].split('/'))
+                            if actor['sex'] == role['actor_sex']:
                                 # Проверяем, подходит ли проект актеру
                                 if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
                                     # Проверяем, подходит гонорар

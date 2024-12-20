@@ -24,17 +24,31 @@ async def get_origin_request(callback: CallbackQuery, state: FSMContext):
     # После следующей операции получим список из 3 элементов:
     # ID в канале со всеми кастингами, username канала источника, ID сообщения в канале источнике
     msg_info = callback.data.replace('origin_', '').split('-')
-    await bot.forward_message(
-        chat_id=callback.from_user.id,
-        from_chat_id=PUBLIC_CHANNEL,
-        message_id=int(msg_info[0]))
+    try:
+        await bot.forward_message(
+            chat_id=callback.from_user.id,
+            from_chat_id=PUBLIC_CHANNEL,
+            message_id=int(msg_info[0]))
 
-    # Если есть текст для проб, в виде файла, идущем следующем сообщением в чате-источнике, то пробросим и его
-    await techno_dict['parser'].check_text_for_prob(
-        origin_chat=msg_info[1],
-        next_origin_message=(int(msg_info[2]) + 1),
-        user_id=callback.from_user.id
-    )
+        # Если есть текст для проб, в виде файла, идущем следующем сообщением в чате-источнике, то пробросим и его
+        await techno_dict['parser'].check_text_for_prob(
+            origin_chat=msg_info[1],
+            next_origin_message=(int(msg_info[2]) + 1),
+            user_id=callback.from_user.id
+        )
+    except ValueError:  # Если не одно фото, а ДВА
+        msg_list = [int(i) for i in msg_info[0].split('&')]
+        await bot.forward_messages(
+            chat_id=callback.from_user.id,
+            from_chat_id=PUBLIC_CHANNEL,
+            message_ids=msg_list
+        )
+        # Если есть текст для проб, в виде файла, идущем следующем сообщением в чате-источнике, то пробросим и его
+        await techno_dict['parser'].check_text_for_prob(
+            origin_chat=msg_info[1],
+            next_origin_message=(msg_list[-1] + 1),
+            user_id=callback.from_user.id
+        )
 
 
 # ====================
@@ -288,24 +302,6 @@ async def setup_playing_age_func(msg: Message, state: FSMContext):
         await open_acc_setup_menu(msg, state)
     except ValueError:
         await msg.answer('Ошибка ввода!\nВведите диапазон, который вы можете играть через дефис')
-
-
-# @users_router.message(ActorsState.geo_location_setup)
-# async def setup_geo_location_func(msg: Message, state: FSMContext):
-#     """Сохраняем изменения город проживания"""
-#     await base.setup_param('geo_location', msg.text, msg.from_user.id)
-#     await msg.answer('Изменения сохранены')
-#     await state.clear()
-#     await open_acc_setup_menu(msg, state)
-#
-#
-# @users_router.message(ActorsState.contacts_setup)
-# async def setup_contacts_func(msg: Message, state: FSMContext):
-#     """Сохраняем изменения контактные данные"""
-#     await base.setup_param('contacts', msg.text, msg.from_user.id)
-#     await msg.answer('Изменения сохранены')
-#     await state.clear()
-#     await open_acc_setup_menu(msg, state)
 
 
 @users_router.message(ActorsState.agent_contact_setup)

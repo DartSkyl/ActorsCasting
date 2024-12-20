@@ -9,6 +9,7 @@ from pyrogram import filters
 
 from aiogram.types.chat_member_left import ChatMemberLeft
 from aiogram.types import FSInputFile
+from aiogram.utils.media_group import MediaGroupBuilder
 
 from asyncpg.exceptions import UniqueViolationError, PostgresSyntaxError
 
@@ -141,10 +142,43 @@ async def parser_start():
                 # И публикуем в закрытом канале в качестве оригинала
                 if not pict:
                     m = await bot.send_message(chat_id=PUBLIC_CHANNEL, text=casting_text)
+                    m_id = m.message_id
                 else:
-                    f = await app.download_media(message)
-                    m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
-                    os.remove(f)
+                    if not message.media_group_id:  # Если в сообщении только одно фото
+                        f = await app.download_media(message)
+                        m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
+                        m_id = m.message_id
+                        os.remove(f)
+                    else:  # Если фото несколько
+                        # С каждой итерацией будем проверять на одно сообщение дальше,
+                        # пока не закончиться общий media_group_id
+                        next_msg_id = 0
+                        # И соберем их все в один список
+                        msg_photo_list = []
+                        while True:
+                            next_msg = await client.get_messages(chat_id=message.chat.id, message_ids=(message.id+next_msg_id))
+                            if next_msg.media_group_id == message.media_group_id:
+                                msg_photo_list.append(next_msg)
+                                next_msg_id += 1
+                            else:
+                                break
+
+                        # Теперь нужно сформировать годный к отправке список с фото
+                        media_group = MediaGroupBuilder(caption=casting_text)
+                        # И список с путями, что бы зачистить после себя
+                        ph_list_path = []
+                        for mess in msg_photo_list:
+                            ph = await app.download_media(mess)
+                            media_group.add(type='photo', media=FSInputFile(ph))
+                            ph_list_path.append(ph)
+
+                        m_list = await bot.send_media_group(chat_id=PUBLIC_CHANNEL, media=media_group.build())
+                        # Формируем строку со списком ID
+                        m_id = '&'.join([str(m.message_id) for m in m_list])
+                        # Зачищаем после загрузки
+
+                        for ph in ph_list_path:
+                            os.remove(ph)
                 # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
                 try:
                     # Сохраняем в базу
@@ -154,7 +188,7 @@ async def parser_start():
                         casting_data=json.dumps(casting_data),
                         casting_config=json.dumps(casting_config),
                         casting_origin=f'https://t.me/{message.chat.username}/{message.id}',
-                        origin_for_user=f'{m.message_id}-{message.chat.username}-{message.id}'
+                        origin_for_user=f'{m_id}-{message.chat.username}-{message.id}'
                     )
                     print('success')
                 except PostgresSyntaxError as ex:
@@ -230,7 +264,7 @@ async def parser_start():
                                 chat_id=actor['user_id'],
                                 text=msg_text.replace('female', 'Женский').replace('male', 'Мужской'),
                                 reply_markup=await button_for_casting(
-                                    message_id=f'{m.message_id}-{message.chat.username}-{message.id}',
+                                    message_id=f'{m_id}-{message.chat.username}-{message.id}',
                                     casting_hash=casting_hash
                                 )
                             )
@@ -240,7 +274,7 @@ async def parser_start():
                                 chat_id=1004280953,
                                 text=msg_text,
                                 reply_markup=await button_for_casting(
-                                    message_id=f'{m.message_id}-{message.chat.username}-{message.id}',
+                                    message_id=f'{m_id}-{message.chat.username}-{message.id}',
                                     casting_hash=casting_hash
                                 )
                             )

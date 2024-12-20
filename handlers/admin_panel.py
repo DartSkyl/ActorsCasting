@@ -7,19 +7,17 @@ from aiogram import F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
-from loader import dp, techno_dict, bot, base
+from loader import base
 from utils.admin_router import admin_router
-from utils.users_router import users_router
-from keyboards.reply import admin_main, cancel_button, ready_button, skip_button, add_new_casting
-from keyboards.inline_admin import casting_bd_period, button_for_casting_admin, check_new_casting, user_action_menu
-from keyboards.inline_actors import cycle_for_direct
-from states import AdminStates, AddNewCasting
-from config import MAIN_GROUP, ADMINS
+from keyboards.reply import admin_main, cancel_button
+from keyboards.inline_admin import casting_bd_period, button_for_casting_admin, user_action_menu
+from states import AdminStates
 
 
 @admin_router.message(Command('admin'))
-async def open_admin_panel(msg: Message):
+async def open_admin_panel(msg: Message, state: FSMContext):
     """Открываем админ-панель"""
+    await state.clear()
     await msg.answer(f'Добрый день, {msg.from_user.first_name}!\nВыберете действие:', reply_markup=admin_main)
 
 

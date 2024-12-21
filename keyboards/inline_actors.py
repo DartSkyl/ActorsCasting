@@ -122,4 +122,3 @@ async def pay_page(user_id):
         [InlineKeyboardButton(text='Подписка на 3 месяца - 1370₽ (-24%)', url=f'{PAYWALL_URL + str(user_id)}')]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
-

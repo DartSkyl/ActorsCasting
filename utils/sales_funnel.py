@@ -6,6 +6,7 @@ from apscheduler.jobstores.base import JobLookupError
 from aiogram.types import Message
 from keyboards.inline_actors import i_want_1, i_want_2, i_want_3, i_want_4, i_want_5
 from loader import techno_dict
+from config import PG_URI
 from utils.user_bot_parser import check_paid
 
 
@@ -105,6 +106,7 @@ class SalesFunnel:
 
     def __init__(self):
         self._scheduler = AsyncIOScheduler()
+        # self._scheduler.add_jobstore(jobstore='sqlalchemy', alias='sales_funnel', url=PG_URI, tablename='aps_sale')
         self._scheduler.start()
 
     async def first_step(self, user_id, message: Message):

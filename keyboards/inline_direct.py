@@ -21,7 +21,7 @@ sex_choice = InlineKeyboardMarkup(inline_keyboard=[
 
 prob_text_have = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Есть', callback_data='prob_yes')],
-    [InlineKeyboardButton(text='Нету', callback_data='prob_no')]
+    [InlineKeyboardButton(text='Нет', callback_data='prob_no')]
 ])
 
 redactor_keys = InlineKeyboardMarkup(inline_keyboard=[
@@ -41,6 +41,11 @@ redactor_keys = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Изменить "Что указать в заявке"', callback_data='edit_rules')],
     [InlineKeyboardButton(text='Изменить "Дополнительная информация"', callback_data='edit_dop_info')],
     [InlineKeyboardButton(text='✅ Опубликовать кастинг', callback_data='get_public')]
+])
+
+preview_keys = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='✅ Опубликовать', callback_data='get_public')],
+    [InlineKeyboardButton(text='Внести изменения', callback_data='get_edit')]
 ])
 
 recycle = InlineKeyboardMarkup(inline_keyboard=[

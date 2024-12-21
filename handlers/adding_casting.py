@@ -120,12 +120,9 @@ async def additional_requirements_saver(msg: Message, state: FSMContext):
 @users_router.message(AddNewCasting.fee)
 async def fee_saver(msg: Message, state: FSMContext):
     """Ловим гонорар"""
-    try:
-        await state.update_data({'fee': int(msg.text)})
-        await msg.answer('Есть ли текст для проб?', reply_markup=prob_text_have)
-        await state.set_state(AddNewCasting.have_prob)
-    except ValueError:
-        await msg.answer('Нужно ввести целое число! Повторите!')
+    await state.update_data({'fee': msg.text})
+    await msg.answer('Есть ли текст для проб?', reply_markup=prob_text_have)
+    await state.set_state(AddNewCasting.have_prob)
 
 
 @users_router.callback_query(AddNewCasting.have_prob)
@@ -179,8 +176,8 @@ dict_for_msg = {
     'mass': 'Групповка / массовка',
     'male': 'Мужской',
     'female': 'Женский',
-    'yes': 'есть',
-    'no': 'нету',
+    'yes': 'Усть',
+    'no': 'Нет',
 }
 
 
@@ -210,7 +207,7 @@ async def show_cast_data_msg(msg: Message, state: FSMContext):
                      f'<b>Есть ли текст для проб:</b> {dict_for_msg[cast_data["have_prob"]]}\n'
                      f'<b>Куда отправлять заявки:</b> {cast_data["contacts"]}\n'
                      f'<b>Что указать в заявке:</b> {cast_data["rules"]}\n'
-                     f'<b>Дополнительная информация:</b> {cast_data["dop_info"]}\n', reply_markup=redactor_keys)
+                     f'<b>Дополнительная информация:</b> {cast_data["dop_info"]}\n', reply_markup=preview_keys)
 
 
 async def show_cast_data_callback(callback: CallbackQuery, state: FSMContext):
@@ -232,7 +229,14 @@ async def show_cast_data_callback(callback: CallbackQuery, state: FSMContext):
                                   f'<b>Куда отправлять заявки:</b> {cast_data["contacts"]}\n'
                                   f'<b>Что указать в заявке:</b> {cast_data["rules"]}\n'
                                   f'<b>Дополнительная информация:</b> {cast_data["dop_info"]}\n',
-                                  reply_markup=redactor_keys)
+                                  reply_markup=preview_keys)
+
+
+@users_router.callback_query(AddNewCasting.preview, F.data == 'get_edit')
+async def get_edit_panel(callback: CallbackQuery):
+    """Панель изменений"""
+    await callback.answer()
+    await callback.message.edit_reply_markup(reply_markup=redactor_keys)
 
 
 @users_router.callback_query(AddNewCasting.preview, F.data == 'get_public')
@@ -368,12 +372,9 @@ async def edit_additional_requirements(msg: Message, state: FSMContext):
 @users_router.message(AddNewCasting.edit_fee)
 async def edit_fee(msg: Message, state: FSMContext):
     """Редактируем гонорар"""
-    try:
-        await state.update_data({'fee': int(msg.text)})
-        await state.set_state(AddNewCasting.preview)
-        await show_cast_data_msg(msg, state)
-    except ValueError:
-        await msg.answer('Нужно ввести целое число! Повторите!')
+    await state.update_data({'fee': msg.text})
+    await state.set_state(AddNewCasting.preview)
+    await show_cast_data_msg(msg, state)
 
 
 @users_router.message(AddNewCasting.edit_contacts)

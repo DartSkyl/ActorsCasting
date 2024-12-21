@@ -113,3 +113,13 @@ i_want_4 = InlineKeyboardMarkup(inline_keyboard=[
 i_want_5 = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='☕ Угостить бота кофе', callback_data='i_want')]
 ])
+
+
+async def pay_page(user_id):
+    """Возвращает кнопку со ссылкой для оплаты"""
+    buttons = [
+        [InlineKeyboardButton(text='Подписка на месяц - 599₽', url=f'{PAYWALL_URL + str(user_id)}')],
+        [InlineKeyboardButton(text='Подписка на 3 месяца - 1370₽ (-24%)', url=f'{PAYWALL_URL + str(user_id)}')]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+

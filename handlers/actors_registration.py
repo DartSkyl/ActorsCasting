@@ -7,10 +7,10 @@ from loader import base, techno_dict
 from utils.users_router import users_router
 from utils.user_bot_parser import check_paid
 from states import ActorsState
-from keyboards.reply import skip_button, main_menu_actor, pay_choice
+from keyboards.reply import skip_button, main_menu_actor
 from keyboards.inline_actors import (sex_choice, education_choice, experience_choice,
                                      role_interested, editor_keyboard, paid_url, first_start, first_answer,
-                                     i_want_2, i_want_1, i_want_5)
+                                     i_want_2, i_want_1, i_want_5, pay_page)
 
 
 @users_router.message(Command('start'))
@@ -253,7 +253,7 @@ async def registry_new_actor(callback: CallbackQuery, state: FSMContext):
         '<blockquote> приобретая пакет, вы принимаете <a href="https://disk.yandex.ru/d/y1EoKJjeqvqv2w">'
         'оферту</a> и соглашаетесь с '
         '<a href="https://disk.yandex.ru/d/rUAPTKcfIRVegQ">политикой обработки персональных данных</a></blockquote>',
-        reply_markup=pay_choice)
+        reply_markup=await pay_page(callback.from_user.id))
     await techno_dict['sales_funnel'].first_step(user_id=str(callback.from_user.id), message=callback.message)
     await state.clear()
 
@@ -267,7 +267,7 @@ async def get_pay_page_2(callback: CallbackQuery):
         '<blockquote> приобретая пакет, вы принимаете <a href="https://disk.yandex.ru/d/y1EoKJjeqvqv2w">'
         'оферту</a> и соглашаетесь с '
         '<a href="https://disk.yandex.ru/d/rUAPTKcfIRVegQ">политикой обработки персональных данных</a></blockquote>',
-        reply_markup=pay_choice)
+        reply_markup=await pay_page(callback.from_user.id))
 
 
 @users_router.callback_query(F.data == 'i_can')

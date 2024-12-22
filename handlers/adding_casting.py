@@ -90,7 +90,7 @@ async def playing_age_saver(msg: Message, state: FSMContext):
         await msg.answer('Напишите название роли:')
         await state.set_state(AddNewCasting.role_name)
     except ValueError:
-        await msg.answer('Ошибка ввода!\nВведите диапазон, который вы можете играть через дефис')
+        await msg.answer('Ошибка ввода!\nВведите диапазон через дефис')
 
 
 @users_router.message(AddNewCasting.role_name)
@@ -176,7 +176,7 @@ dict_for_msg = {
     'mass': 'Групповка / массовка',
     'male': 'Мужской',
     'female': 'Женский',
-    'yes': 'Усть',
+    'yes': 'Есть',
     'no': 'Нет',
 }
 

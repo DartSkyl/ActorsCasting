@@ -1,6 +1,5 @@
 import asyncio
 from datetime import date, datetime, timedelta
-import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.base import JobLookupError
 from aiogram.types import Message
@@ -106,7 +105,6 @@ class SalesFunnel:
 
     def __init__(self):
         self._scheduler = AsyncIOScheduler()
-        # self._scheduler.add_jobstore(jobstore='sqlalchemy', alias='sales_funnel', url=PG_URI, tablename='aps_sale')
         self._scheduler.start()
 
     async def first_step(self, user_id, message: Message):

@@ -48,6 +48,9 @@ check_new_casting = InlineKeyboardMarkup(inline_keyboard=[
 user_action_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Добавить подписку пользователю', callback_data='sub_add')],
     [InlineKeyboardButton(text='Удалить подписку пользователю', callback_data='sub_del')],
+    [InlineKeyboardButton(text='Общее количество', callback_data='count')],
+    [InlineKeyboardButton(text='Рассылка по пользователям', callback_data='newsletter')],
+    [InlineKeyboardButton(text='Удалить пользователя', callback_data='delete_user')],
     [InlineKeyboardButton(text='Посмотреть настройки пользователя', callback_data='show_user')],
 ])
 

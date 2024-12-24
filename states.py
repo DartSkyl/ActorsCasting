@@ -57,6 +57,8 @@ class AdminStates(StatesGroup):
     # Взаимодействие с БД
     set_period = State()
     set_user_date = State()
+    delete_user = State()
+    newsletter = State()
 
     second_text = State()
 

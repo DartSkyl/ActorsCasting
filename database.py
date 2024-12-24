@@ -117,6 +117,11 @@ class BotBase:
             await connection.execute(f"UPDATE public.all_actors SET favorites = '{new_favorites}' "
                                      f"WHERE user_id = {user_id};")
 
+    async def delete_user(self, user_id):
+        """Удаление пользователя из базы"""
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"DELETE FROM public.all_actors WHERE user_id = {user_id};")
+
     # ====================
     # Операции с кастингами
     # ====================

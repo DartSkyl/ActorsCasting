@@ -268,16 +268,16 @@ async def parser_start():
                                     casting_hash=casting_hash
                                 )
                             )
-                            # Для мониторинга того, что приходит другим
-                            msg_text += f'<b>Кому отправлено:</b> {actor["actor_name"]}\n'
-                            await bot.send_message(
-                                chat_id=1004280953,
-                                text=msg_text,
-                                reply_markup=await button_for_casting(
-                                    message_id=f'{m_id}-{message.chat.username}-{message.id}',
-                                    casting_hash=casting_hash
-                                )
-                            )
+                            # # Для мониторинга того, что приходит другим
+                            # msg_text += f'<b>Кому отправлено:</b> {actor["actor_name"]}\n'
+                            # await bot.send_message(
+                            #     chat_id=1004280953,
+                            #     text=msg_text,
+                            #     reply_markup=await button_for_casting(
+                            #         message_id=f'{m_id}-{message.chat.username}-{message.id}',
+                            #         casting_hash=casting_hash
+                            #     )
+                            # )
             except TypeError as e:  # Значит не кастинг
                 pass
             except UniqueViolationError as e:  # Проскачил уже имеющийся в базе

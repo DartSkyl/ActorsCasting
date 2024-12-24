@@ -6,6 +6,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram import F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from aiogram.exceptions import TelegramForbiddenError
 
 from loader import base, bot
 from utils.admin_router import admin_router
@@ -27,6 +28,13 @@ async def get_drop_messages(msg: Message):
     await msg.answer_document(document=FSInputFile('drop.log'))
     os.remove('drop.log')
 
+
+@admin_router.message(F.text == '🚫 Отмена')
+async def cancel(msg: Message, state: FSMContext):
+    await state.clear()
+    await msg.answer('Действие отменено')
+    await msg.answer('Выберете действие:', reply_markup=admin_main)
+
 # ====================
 # Работа с пользователями
 # ====================
@@ -38,9 +46,59 @@ async def user_menu_open(msg: Message):
     await msg.answer('Выберете, что хотите сделать:', reply_markup=user_action_menu)
 
 
+@admin_router.callback_query(F.data == 'count')
+async def user_count(callback: CallbackQuery):
+    """Кол-во актеров в базе"""
+    await callback.answer()
+    actors_count = len(await base.get_all_actors())
+    await callback.message.answer(f'Сейчас в базе зарегистрировано <b>{actors_count}</b> актеров')
+
+
+@admin_router.callback_query(F.data == 'newsletter')
+async def newsletter_start(callback: CallbackQuery, state: FSMContext):
+    """Рассылка по всем пользователям"""
+    await callback.answer()
+    await state.set_state(AdminStates.newsletter)
+    await callback.message.answer('Введите текст для рассылки:', reply_markup=cancel_button)
+
+
+@admin_router.message(AdminStates.newsletter, F.text != '🚫 Отмена')
+async def newsletter_func(msg: Message, state: FSMContext):
+    """Сама рассылка"""
+    all_actors = await base.get_all_actors()
+    for actor in all_actors:
+        try:
+            if actor['user_id'] != msg.from_user.id:
+                await bot.send_message(chat_id=actor['user_id'], text=msg.text)
+        except TelegramForbiddenError:
+            pass
+    await msg.answer('Сообщение разослано!')
+    await state.clear()
+    await msg.answer('Выберете действие:', reply_markup=admin_main)
+
+
+@admin_router.callback_query(F.data == 'delete_user')
+async def start_deleting(callback: CallbackQuery, state: FSMContext):
+    """Начало удаления пользователя"""
+    await callback.answer()
+    await state.set_state(AdminStates.delete_user)
+    await callback.message.answer('Перешлите сообщение пользователя, которого хотите удалить', reply_markup=cancel_button)
+
+
+@admin_router.message(AdminStates.delete_user)
+async def deleting_function(msg: Message, state: FSMContext):
+    """Удаление пользователя"""
+    if msg.forward_from:
+        await base.delete_user(msg.forward_from.id)
+        await msg.answer('Пользователь удален')
+        await state.clear()
+        await msg.answer('Выберете действие:', reply_markup=admin_main)
+
+
 @admin_router.callback_query(F.data.startswith('sub_'))
 async def sub_actions(callback: CallbackQuery, state: FSMContext):
     """Запускаем действие с подпиской"""
+    await callback.answer()
     if callback.data == 'sub_add':
         await state.set_state(AdminStates.sub_add)
         await callback.message.answer('Перешлите сообщение пользователя, которому хотите добавить подписку')
@@ -95,6 +153,7 @@ async def add_sub_user(msg: Message, state: FSMContext):
 @admin_router.callback_query(F.data == 'show_user')
 async def show_user_settings(callback: CallbackQuery, state: FSMContext):
     """Запускаем демонстрацию настроек пользователя"""
+    await callback.answer()
     await callback.message.answer('Перешлите сообщение пользователя, чьи настройки хотите посмотреть:')
     await state.set_state(AdminStates.show_user)
 

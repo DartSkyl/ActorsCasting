@@ -70,9 +70,12 @@ async def name_saver(callback: CallbackQuery, state: FSMContext):
 @users_router.message(ActorsState.passport_age)
 async def passport_age_saver(msg: Message, state: FSMContext):
     """Сохраняем возраст по паспорту и переходим к следующему вопросу"""
-    await state.update_data({'passport_age': msg.text})
-    await msg.answer('Игровой возраст (диапазон, который вы можете играть через дефис)')
-    await state.set_state(ActorsState.playing_age)
+    try:
+        await state.update_data({'passport_age': int(msg.text)})
+        await msg.answer('Игровой возраст (диапазон, который вы можете играть через дефис)')
+        await state.set_state(ActorsState.playing_age)
+    except ValueError:
+        await msg.answer('Ошибка ввода!\nВведите целое число!')
 
 
 @users_router.message(ActorsState.playing_age)
@@ -357,10 +360,13 @@ async def edit_actor_name_func(msg: Message, state: FSMContext):
 @users_router.message(ActorsState.edit_passport_age)
 async def edit_passport_age_func(msg: Message, state: FSMContext):
     """Сохраняем изменения Возраст по паспорту"""
-    await state.update_data({'passport_age': msg.text})
-    await msg.answer('Изменения сохранены')
-    await state.set_state(ActorsState.preview)
-    await review_all_data_after_edit(msg, state)
+    try:
+        await state.update_data({'passport_age': int(msg.text)})
+        await msg.answer('Изменения сохранены')
+        await state.set_state(ActorsState.preview)
+        await review_all_data_after_edit(msg, state)
+    except ValueError:
+        await msg.answer('Ошибка ввода!\nВведите целое число!')
 
 
 @users_router.message(ActorsState.edit_playing_age)

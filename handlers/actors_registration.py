@@ -7,7 +7,7 @@ from loader import base, techno_dict
 from utils.users_router import users_router
 from utils.user_bot_parser import check_paid
 from states import ActorsState
-from keyboards.reply import skip_button, main_menu_actor
+from keyboards.reply import main_menu_actor
 from keyboards.inline_actors import (sex_choice, education_choice, experience_choice,
                                      role_interested, editor_keyboard, paid_url, first_start, first_answer,
                                      i_want_2, i_want_1, i_want_5, pay_page)
@@ -27,7 +27,7 @@ async def start_func(msg: Message):
 
 
 @users_router.callback_query(F.data == 'actor')
-async def start_actor_registration(callback: CallbackQuery, state: FSMContext):
+async def start_actor_registration(callback: CallbackQuery):
     """Начало регистрации актера"""
     await callback.answer()
     await callback.message.answer('Класс, люблю работать с актёрами. Потому что кто-то из них рано '
@@ -58,7 +58,7 @@ async def name_saver(msg: Message, state: FSMContext):
     await state.set_state(ActorsState.sex)
 
 
-@users_router.callback_query(ActorsState.sex)
+@users_router.callback_query(ActorsState.sex, F.data.startswith('sex_'))
 async def name_saver(callback: CallbackQuery, state: FSMContext):
     """Сохраняем пол и переходим к следующему вопросу"""
     await callback.answer()
@@ -92,7 +92,7 @@ async def playing_age_saver(msg: Message, state: FSMContext):
         await msg.answer('Ошибка ввода!\nВведите диапазон, который вы можете играть через дефис')
 
 
-@users_router.callback_query(ActorsState.education)
+@users_router.callback_query(ActorsState.education, F.data.startswith('educ_'))
 async def education_saver(callback: CallbackQuery, state: FSMContext):
     """Сохраняем образование и переходим к следующему вопросу"""
     await callback.answer()
@@ -101,7 +101,7 @@ async def education_saver(callback: CallbackQuery, state: FSMContext):
     await state.set_state(ActorsState.have_experience)
 
 
-@users_router.callback_query(ActorsState.have_experience)
+@users_router.callback_query(ActorsState.have_experience, F.data.startswith('exp_'))
 async def experience_saver(callback: CallbackQuery, state: FSMContext):
     """Сохраняем опыт и переходим к следующему вопросу"""
     await callback.answer()
@@ -197,20 +197,23 @@ async def review_all_data(callback: CallbackQuery, state: FSMContext):
     """Выводим все введенные данные и даем возможность исправить"""
     await callback.answer()
     actor_data = await state.get_data()
-    msg_text = (f'Проверь правильность введенных данных:\n\n'
-                f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
-                f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
-                f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
-                f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
-                f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
-                f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
-                f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
-                f'<b>Соц. сети:</b> {actor_data["social"]}\n'
-                f'<b>Минимальный гонорар:</b> {actor_data["fee"]}\n'
-                f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
-    await callback.message.answer(msg_text, reply_markup=editor_keyboard)
-    await callback.message.answer('Если все верно нажмите "Зарегистрироваться"')
-    await state.set_state(ActorsState.preview)
+    if len(actor_data["projects_interest"]) > 0:
+        msg_text = (f'Проверь правильность введенных данных:\n\n'
+                    f'<b>ФИО:</b> {actor_data["actor_name"]}\n'
+                    f'<b>Пол:</b> {dict_for_msg_build[actor_data["sex"]]}\n'
+                    f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
+                    f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
+                    f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
+                    f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
+                    f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
+                    f'<b>Соц. сети:</b> {actor_data["social"]}\n'
+                    f'<b>Минимальный гонорар:</b> {actor_data["fee"]}\n'
+                    f'<b>То, что интересует:</b> {", ".join([dict_for_msg_build[a] for a in actor_data["projects_interest"]])}')
+        await callback.message.answer(msg_text, reply_markup=editor_keyboard)
+        await callback.message.answer('Если все верно нажмите "Зарегистрироваться"')
+        await state.set_state(ActorsState.preview)
+    else:
+        await callback.message.answer('Нужно выбрать хотя бы один интерес!')
 
 
 async def review_all_data_after_edit(msg: Message, state: FSMContext):
@@ -250,6 +253,7 @@ async def registry_new_actor(callback: CallbackQuery, state: FSMContext):
         social=actor_data['social'],
         projects_interest='+'.join(actor_data['projects_interest'])
     )
+    await state.clear()
     await callback.message.answer(
         'Отлично! Теперь я понимаю, какие кастинги тебе подойдут и готов мониторить и присылать их '
         'тебе и днём и ночью.\nВыбери подходящий вариант нашего дальнейшего взаимодействия:\n'
@@ -258,7 +262,6 @@ async def registry_new_actor(callback: CallbackQuery, state: FSMContext):
         '<a href="https://disk.yandex.ru/d/rUAPTKcfIRVegQ">политикой обработки персональных данных</a></blockquote>',
         reply_markup=await pay_page(callback.from_user.id))
     await techno_dict['sales_funnel'].first_step(user_id=str(callback.from_user.id), message=callback.message)
-    await state.clear()
 
 
 @users_router.callback_query(F.data == 'i_want')
@@ -431,7 +434,7 @@ async def edit_social_func(msg: Message, state: FSMContext):
     await review_all_data_after_edit(msg, state)
 
 
-@users_router.callback_query(ActorsState.edit_sex)
+@users_router.callback_query(ActorsState.edit_sex, F.data.startswith('sex_'))
 async def edit_sex_func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения пол"""
     await callback.answer()
@@ -441,7 +444,7 @@ async def edit_sex_func(callback: CallbackQuery, state: FSMContext):
     await review_all_data(callback, state)
 
 
-@users_router.callback_query(ActorsState.edit_education)
+@users_router.callback_query(ActorsState.edit_education, F.data.startswith('educ_'))
 async def edit_education_func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения образование"""
     await callback.answer()
@@ -451,7 +454,7 @@ async def edit_education_func(callback: CallbackQuery, state: FSMContext):
     await review_all_data(callback, state)
 
 
-@users_router.callback_query(ActorsState.edit_have_experience)
+@users_router.callback_query(ActorsState.edit_have_experience, F.data.startswith('exp_'))
 async def edit_have_experience_func(callback: CallbackQuery, state: FSMContext):
     """Сохраняем изменения опыт"""
     await callback.answer()
@@ -484,5 +487,5 @@ async def edit_roles_type_interest_func(callback: CallbackQuery, state: FSMConte
         await state.update_data({'projects_interest': projects_interest})
         await callback.message.edit_text(msg_text, reply_markup=role_interested)
     else:
-        await state.set_state(ActorsState.preview)
+        # await state.set_state(ActorsState.preview)
         await review_all_data(callback, state)

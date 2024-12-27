@@ -5,6 +5,7 @@ from aiogram import F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ChatMember
+from aiogram.exceptions import TelegramForbiddenError
 from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, MEMBER
 
 from loader import base, techno_dict, dp, bot
@@ -86,8 +87,12 @@ async def catch_new_member(chat_member: ChatMember):
 Спасибо, что вы с нами❤️
 С уважением, команда Oh My Cast.
         """
-        await bot.send_message(chat_id=chat_member.from_user.id, text=msg_text)
-        await bot.send_message(chat_id=chat_member.from_user.id, text=msg_text_2, reply_markup=main_menu_actor)
+        try:
+            await bot.send_message(chat_id=chat_member.new_chat_member.user.id, text=msg_text)
+            await bot.send_message(chat_id=chat_member.new_chat_member.user.id, text=msg_text_2, reply_markup=main_menu_actor)
+        except TelegramForbiddenError:
+            with open('msg_error.txt', 'a') as file:
+                print(chat_member, file=file)
 
 
 @users_router.message(Command('subscription'))
@@ -228,8 +233,6 @@ async def open_acc_setup_menu(msg: Message, state: FSMContext):
                     f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
                     f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
                     f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
-                    # f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
-                    # f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
                     f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                     f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                     f'<b>Соц. сети:</b> {actor_data["social"]}\n'
@@ -274,8 +277,6 @@ async def review_all_data_after_setup(callback: CallbackQuery, state: FSMContext
                 f'<b>Возраст по паспорту:</b> {actor_data["passport_age"]}\n'
                 f'<b>Игровой возраст:</b> {actor_data["playing_age"]}\n'
                 f'<b>Образование:</b> {dict_for_msg_build[actor_data["education"]]}\n'
-                # f'<b>Город проживания:</b> {actor_data["geo_location"]}\n'
-                # f'<b>Контактные данные:</b> {actor_data["contacts"]}\n'
                 f'<b>Опыт:</b> {dict_for_msg_build[actor_data["have_experience"]]}\n'
                 f'<b>Портфолио:</b> {actor_data["portfolio"]}\n'
                 f'<b>Соц. сети:</b> {actor_data["social"]}\n'
@@ -412,6 +413,9 @@ async def setup_roles_type_interest_func(callback: CallbackQuery, state: FSMCont
         await callback.message.edit_text(msg_text, reply_markup=role_interested)
     else:
         projects_interest: list = (await state.get_data())['projects_interest']
-        await base.setup_param('projects_interest', '+'.join(projects_interest), callback.from_user.id)
-        await state.clear()
-        await review_all_data_after_setup(callback, state)
+        if len(projects_interest) > 0:
+            await base.setup_param('projects_interest', '+'.join(projects_interest), callback.from_user.id)
+            await state.clear()
+            await review_all_data_after_setup(callback, state)
+        else:
+            await callback.message.answer('Нужно выбрать хотя бы один интерес!')

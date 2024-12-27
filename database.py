@@ -178,7 +178,6 @@ class BotBase:
     async def get_all_texts(self):
         async with self.pool.acquire() as connection:
             result = await connection.fetch(f"SELECT casting_text FROM public.all_castings_texts ORDER BY id DESC LIMIT 200;")
-            print(result)
             return result
 
     # ====================

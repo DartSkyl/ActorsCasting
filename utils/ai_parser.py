@@ -13,8 +13,11 @@ from loader import base
 class ProjectInfo(BaseModel):
     """Класс описывает информацию о проекте"""
     project_name: str = Field(description='Название проекта')
-    project_type: str = Field(default='Не указано', description='Тип проекта, один из вариантов: полнометражный фильм, сериал, реклама,'
-                                          'некоммерческий проект')
+    project_type: str = Field(default='Не указано', description='Тип проекта, один из вариантов: полнометражный фильм, '
+                                                                'сериал, реклама,'
+                                                                'некоммерческий проект. короткометражные фильмы и '
+                                                                'студенческие работы относятся к '
+                                                                '"некоммерческим проектам"')
     filming_dates: str = Field(description='Даты съемок.')
 
 
@@ -60,8 +63,6 @@ class ContactsParsing(BaseModel):
                                       'ссылка на сторонний ресурс. Если контактных данных нет или '
                                       'написано "заявки оставлять в комментариях" или что то '
                                       'подобное, значение должно быть "комментарии".')
-    # title: str = Field(default='неуказан', description='Для электронных писем часто указывают что написать в '
-    #                                                    'заголовке или теме письма')
     rules: str = Field(default='Отсутствуют', description='Правила оформления заявок. Это может быть список того, что '
                                                           'необходимо указать в заявке: заголовок или тема письма,'
                                                           'перечень пунктов, которые необходимо заполнить и что в них '
@@ -86,8 +87,8 @@ class ProbeText(BaseModel):
 
 # Промпт для извлечения информации о проекте
 project_prompt_text = """Тебе будут приходить сообщения с кастингами для актеров. Твоя задача извлечь оттуда информацию о
-проекте: название проекта, тип проекта, дата съемок. Отвечай в формате JSON, как описано в подсказке по форматированию 
-{format_instructions}. Текст сообщения: {input}"""
+проекте: название проекта, тип проекта, дата съемок.
+Отвечай в формате JSON, как описано в подсказке по форматированию {format_instructions}. Текст сообщения: {input}"""
 project_prompt = PromptTemplate.from_template(project_prompt_text)
 project_parser = JsonOutputParser(pydantic_object=ProjectInfo)
 
@@ -141,7 +142,11 @@ check_prompt_text = """Твоя задача определить содержи
 кастинг, то игнорируй это сообщение.
 Отвечай как описано в подсказке по форматированию {format_instructions}.
 Текст сообщения: {input}"""
-check_prompt = PromptTemplate.from_template(check_prompt_text)
+check_prompt_text_ = """Ты актер, которого интересуют новые роли. Тебе будут приходить разного рода сообщения, твоя 
+задача определить, какие из них содержать информацию о предстоящих съемках и где требуются актеры.
+Отвечай как описано в подсказке по форматированию {format_instructions}.
+Текст сообщения: {input}"""
+check_prompt = PromptTemplate.from_template(check_prompt_text_)
 check_parser = JsonOutputParser(pydantic_object=ItCastingOrNot)
 
 # Промпт для извлечения информации о правах из кастинга
@@ -173,7 +178,7 @@ async def extract_json_from_string(input_string):
         return json_data
     except json.JSONDecodeError as e:
         with open('json.log', 'a', encoding='utf-8') as file:
-            file.write(str(input_string))
+            file.write(str(input_string) + '\n\n')
         print(f"Error decoding JSON: {e}")
         return None
 
@@ -195,6 +200,15 @@ async def uniqueness_check(cast_text):
     return True
 
 
+async def check_words(text: str):
+    """Отсеиваем викторины, так ИИ это сложно объяснить"""
+    words = ["викторина", "выиграть"]
+    for word in words:
+        if word in text.lower():
+            return False
+    return True
+
+
 async def get_casting_data(casting_msg: str):
     """Первая цепочка проверяет, содержит ли сообщение информацию о кастинге. Если содержит, то вторая достает ее и
     группирует, а третья формирует конфигурации по этому кастингу, четвертая достает информацию по контактам и правилам
@@ -203,7 +217,8 @@ async def get_casting_data(casting_msg: str):
     check_chain = check_prompt | model | check_parser
     check_response = await check_chain.ainvoke({'input': casting_msg,
                                                 'format_instructions': check_parser.get_format_instructions()})
-    if check_response['it_casting']:
+    print(check_response['it_casting'])
+    if check_response['it_casting'] and await check_words(casting_msg):
 
         # А это для создания ID
         str_for_hashing = casting_msg[:100].encode()

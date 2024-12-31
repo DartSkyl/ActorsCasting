@@ -113,16 +113,16 @@ async def get_contact_link(cast_msg: Message):
                 if e.type == MessageEntityType.TEXT_LINK:
                     if not e.url.startswith('https://t.me/'):
                         cast_text = cast_msg.text.replace(cast_msg.text[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
-                        return cast_text, False
-        return cast_msg.text, False
+                        return cast_text.replace("'", '"'), False
+        return cast_msg.text.replace("'", '"'), False
     elif cast_msg.media == MessageMediaType.PHOTO:
         if cast_msg.caption_entities:
             for e in cast_msg.caption_entities:
                 if e.type == MessageEntityType.TEXT_LINK:
                     if not e.url.startswith('https://t.me/'):
                         cast_text = cast_msg.caption.replace(cast_msg.caption[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
-                        return cast_text, True
-        return cast_msg.caption, True
+                        return cast_text.replace("'", '"'), True
+        return cast_msg.caption.replace("'", '"'), True
 
 
 async def parser_start():
@@ -233,10 +233,8 @@ async def parser_start():
 
                         if len(role_list) > 0:
                             msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
-                                        # f'<b>Место проведения кастинга:</b> {casting_data["search_city"]}\n'
                                         f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
                                         f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n\n')
-                                        # f'<b>Место съемок:</b> {casting_data["filming_location"]}\n\n')
                             for role_info in role_list:
                                 additional_requirements = role_info["additional_requirements"] if role_info.get(
                                     'additional_requirements') else 'Не указан'
@@ -268,16 +266,6 @@ async def parser_start():
                                     casting_hash=casting_hash
                                 )
                             )
-                            # # Для мониторинга того, что приходит другим
-                            # msg_text += f'<b>Кому отправлено:</b> {actor["actor_name"]}\n'
-                            # await bot.send_message(
-                            #     chat_id=1004280953,
-                            #     text=msg_text,
-                            #     reply_markup=await button_for_casting(
-                            #         message_id=f'{m_id}-{message.chat.username}-{message.id}',
-                            #         casting_hash=casting_hash
-                            #     )
-                            # )
             except TypeError as e:  # Значит не кастинг
                 pass
             except UniqueViolationError as e:  # Проскачил уже имеющийся в базе

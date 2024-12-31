@@ -250,8 +250,6 @@ async def start_acc_setup(callback: CallbackQuery, state: FSMContext):
         'setup_playing_age': (
         ActorsState.playing_age_setup, 'Игровой возраст (диапазон, который вы можете играть через дефис)', None),
         'setup_education': (ActorsState.education_setup, 'Выберете образование', education_choice),
-        # 'setup_geo_location': (ActorsState.geo_location_setup, 'Введите город проживания', None),
-        # 'setup_contacts': (ActorsState.contacts_setup, 'Введите контактные данные (телефон, email через запятую)', None),
         'setup_agent_contact': (
         ActorsState.agent_contact_setup, 'Контактные данные вашего агента (телефон, email через запятую)', None),
         'setup_have_experience': (ActorsState.have_experience_setup, 'Какой у вас опыт?', experience_choice),

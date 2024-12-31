@@ -217,7 +217,6 @@ async def get_casting_data(casting_msg: str):
     check_chain = check_prompt | model | check_parser
     check_response = await check_chain.ainvoke({'input': casting_msg,
                                                 'format_instructions': check_parser.get_format_instructions()})
-    print(check_response['it_casting'])
     if check_response['it_casting'] and await check_words(casting_msg):
 
         # А это для создания ID

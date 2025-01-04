@@ -141,6 +141,13 @@ async def add_sub_user(msg: Message, state: FSMContext):
         await state.clear()
 
 
+@admin_router.message(Command('count'))
+async def get_pay_user_count(msg: Message):
+    from config import CONTROL_GROUP
+    count = await bot.get_chat_member_count(chat_id=CONTROL_GROUP)
+    await msg.answer(f'В платном канале <b>{count}</b> подписчика(ов)')
+
+
 @admin_router.message(AdminStates.sub_del)
 async def add_sub_user(msg: Message, state: FSMContext):
     """Добавляем подписку пользователю через пересланное сообщение"""

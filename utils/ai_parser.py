@@ -204,7 +204,7 @@ async def uniqueness_check(cast_text):
 
 async def check_words(text: str):
     """Отсеиваем викторины, так ИИ это сложно объяснить"""
-    words = ["викторина", "выиграть"]
+    words = ["викторина", "выиграть", "викторине"]
     for word in words:
         if word in text.lower():
             return False

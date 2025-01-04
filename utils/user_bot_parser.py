@@ -83,6 +83,7 @@ async def parser_load():
 
 
 async def for_tests(casting_data, casting_config, casting_contacts, casting_rights):
+    print(casting_config)
     msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
                 f'<b>Даты съемок:</b> {casting_data["filming_dates"]}\n'
                 f'<b>Тип проекта:</b> {casting_data["project_type"]}\n\n')
@@ -98,10 +99,9 @@ async def for_tests(casting_data, casting_config, casting_contacts, casting_righ
                      f'<b>Гонорар:</b> {role_info["fee"]}\n\n')
     msg_text += (f'<b>Заявки отправлять:</b> {casting_contacts["contacts"]}\n'
                  f'<b>Правила оформления заявок:</b> {casting_contacts["rules"]}\n')
-
     if casting_rights:
         msg_text += f'<b>Права:</b> {casting_rights["rights"]}\n'
-    print(casting_config)
+
     await bot.send_message(chat_id=1004280953, text=msg_text)
 
 
@@ -215,8 +215,8 @@ async def parser_start():
                                         # Игровой диапазон актера
                                         a = [int(i) for i in actor['playing_age'].split('-')]
                                         a.sort()
-                                        # Возрастной диапазон для роли
                                         try:
+                                            # Возрастной диапазон для роли
                                             b = [int(i) for i in role['age_restrictions'].split('-')]
                                             b.sort()
                                             if a[0] <= b[0] <= a[1] or a[0] <= b[1] <= a[1]:
@@ -228,7 +228,7 @@ async def parser_start():
                                                     role_list.append(casting_data['role_description'][role_index - 1])
                                         except IndexError:
                                             b = [int(i) for i in role['age_restrictions'].split('-')]
-                                            if int(b[0]) <= a[1]:
+                                            if a[0] <= int(b[0]) <= a[1]:
                                                 role_list.append(casting_data['role_description'][role_index - 1])
 
                         if len(role_list) > 0:

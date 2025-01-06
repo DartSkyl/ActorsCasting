@@ -145,28 +145,26 @@ async def add_to_favorites(callback: CallbackQuery):
 @users_router.message(F.text == 'Избранное')
 async def get_favorites_list(msg: Message):
     """Открываем список избранного"""
-    try:
-        user_favorites = (await base.get_actor_favorites(msg.from_user.id))[0]['favorites']
-        user_favorites = user_favorites.split('&')
+    user_favorites = (await base.get_actor_favorites(msg.from_user.id))[0]['favorites']
+    user_favorites = user_favorites.split('&')
+    if len(user_favorites) > 0 and user_favorites != ['']:
         for c_hash in user_favorites:
-            casting = (await base.get_casting(c_hash))[0]
-            casting_data = json.loads(casting['casting_data'])
-            # casting_origin = [i for i in casting['origin_for_user'].split('-')]
-            # print(casting_origin)
-            msg_text = (f'<i>Сохраненный кастинг</i>\n\n'
-                        f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
-                        f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
-                        f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n')
-            await msg.answer(msg_text, reply_markup=await button_for_casting(casting['origin_for_user'],
-                                                                             casting_hash_rm=c_hash))
-
-    except AttributeError:  # Выскочит при пустом "Избранное"
-        await msg.answer('В "Избранном" пусто')
-    except IndexError:
-        await msg.answer('В "Избранном" пусто')
-    except Exception as e:
-        await msg.answer('Кастинг был удален администрацией!')
-        print(e)
+            try:
+                casting = (await base.get_casting(c_hash))[0]
+                casting_data = json.loads(casting['casting_data'])
+                msg_text = (f'<i>Сохраненный кастинг</i>\n\n'
+                            f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
+                            f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
+                            f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n')
+                await msg.answer(msg_text, reply_markup=await button_for_casting(casting['origin_for_user'],
+                                                                                 casting_hash_rm=c_hash))
+            except Exception as e:  # Если такого кастинга в базе больше нет, то удалим из избранного
+                user_favorites.remove(c_hash)
+                user_favorites = '&'.join(user_favorites)
+                await base.set_actor_favorites(msg.from_user.id, user_favorites)
+                await msg.answer('Кастинг был удален администрацией!')
+    else:
+        await msg.answer('В "Избранном" пусто!')
 
 
 @users_router.callback_query(F.data.startswith('rm_favorites_'))
@@ -178,10 +176,10 @@ async def remove_favorite_casting(callback: CallbackQuery):
     user_favorites = (await base.get_actor_favorites(callback.from_user.id))[0]['favorites']
     rm_favorites = callback.data.replace('rm_favorites_', '')
     try:
-        user_favorites = user_favorites.split('_')
+        user_favorites = user_favorites.split('&')
         if rm_favorites in user_favorites:
             user_favorites.remove(rm_favorites)
-            user_favorites = '_'.join(user_favorites)
+            user_favorites = '&'.join(user_favorites)
             await base.set_actor_favorites(callback.from_user.id, user_favorites)
             await callback.message.answer('Кастинг удален из "Избранное"')
         else:

@@ -107,11 +107,17 @@ async def sub_actions(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer('Перешлите сообщение пользователя, которому хотите удалить подписку')
 
 
+async def is_digits(s):
+    """Для проверки строки - число или нет"""
+    import re
+    return bool(re.match(r'^[0-9]+$', s))
+
+
 @admin_router.message(AdminStates.sub_add)
 async def add_sub_user(msg: Message, state: FSMContext):
     """Добавляем подписку пользователю через пересланное сообщение"""
-    if msg.forward_from:
-        await base.add_sub(msg.forward_from.id)
+    if msg.forward_from or await is_digits(msg.text):
+        await base.add_sub(msg.forward_from.id if not await is_digits(msg.text) else int(msg.text))
         await msg.answer('Подписка добавлена')
         msg_text = """
 <b>Памятка актёру</b>
@@ -137,7 +143,10 @@ async def add_sub_user(msg: Message, state: FSMContext):
 Спасибо, что вы с нами❤️
 С уважением, команда Oh My Cast.
                 """
-        await bot.send_message(chat_id=msg.forward_from.id, text=msg_text)
+        await bot.send_message(chat_id=msg.forward_from.id if not await is_digits(msg.text) else int(msg.text), text=msg_text)
+        await state.clear()
+    else:
+        await msg.answer('Ошибка ввода!')
         await state.clear()
 
 
@@ -151,8 +160,8 @@ async def get_pay_user_count(msg: Message):
 @admin_router.message(AdminStates.sub_del)
 async def add_sub_user(msg: Message, state: FSMContext):
     """Добавляем подписку пользователю через пересланное сообщение"""
-    if msg.forward_from:
-        await base.del_sub(msg.forward_from.id)
+    if msg.forward_from or await is_digits(msg.text):
+        await base.del_sub(msg.forward_from.id if not await is_digits(msg.text) else int(msg.text))
         await msg.answer('Подписка удалена')
         await state.clear()
 

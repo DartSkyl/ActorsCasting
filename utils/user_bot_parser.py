@@ -137,7 +137,7 @@ async def parser_start():
         if message.chat.id != PUBLIC_CHANNEL:
             try:
                 casting_text, pict = await get_contact_link(message)
-                casting_data, casting_config, casting_contacts, casting_rights, casting_prob, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
+                casting_data, casting_config, casting_contacts, casting_rights, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
 
                 # И публикуем в закрытом канале в качестве оригинала
                 if not pict:
@@ -256,7 +256,7 @@ async def parser_start():
                             if casting_rights:
                                 msg_text += f'<b>Права:</b> {casting_rights["rights"]}\n'
 
-                            msg_text += f'<b>Текст для проб:</b> {"есть" if casting_prob["text"] else "-"}\n'
+                            msg_text += f'<b>Текст для проб:</b> {"есть" if "самопроб" in casting_text.lower() else "-"}\n'
 
                             await bot.send_message(
                                 chat_id=actor['user_id'],

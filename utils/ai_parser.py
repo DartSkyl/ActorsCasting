@@ -146,7 +146,7 @@ check_prompt_text = """Твоя задача определить содержи
 Текст сообщения: {input}"""
 check_prompt_text_ = """Ты актер, которого интересуют новые роли. Тебе будут приходить разного рода сообщения, твоя 
 задача определить, какие из них содержать информацию о предстоящих съемках и где требуются актеры.
-Отвечай как описано в подсказке по форматированию {format_instructions}.
+Отвечай в формате JSON, строго так, как описано в подсказке по форматированию {format_instructions}.
 Текст сообщения: {input}"""
 check_prompt = PromptTemplate.from_template(check_prompt_text_)
 check_parser = JsonOutputParser(pydantic_object=ItCastingOrNot)
@@ -168,7 +168,7 @@ prob_prompt_text = """Проверь сообщение на наличие уп
 prob_prompt = PromptTemplate.from_template(prob_prompt_text)
 prob_parser = JsonOutputParser(pydantic_object=ProbeText)
 
-model = ChatOpenAI(openai_api_key=OPENAI_API_KEY, temperature=0)
+model = ChatOpenAI(openai_api_key=OPENAI_API_KEY, temperature=0, model_name='gpt-4o-mini')
 
 
 async def extract_json_from_string(input_string):
@@ -273,14 +273,14 @@ async def get_casting_data(casting_msg: str):
                 # С помощью следующей функции попробуем сократить последствия данной ошибки
                 casting_contacts = await extract_json_from_string(str(e))
 
-            try:  # Проверяем наличие текста для самопроб
-                probe_chain = prob_prompt | model | prob_parser
-                casting_prob = await probe_chain.ainvoke({'input': casting_msg,
-                                                          'format_instructions': prob_parser.get_format_instructions()})
-            except Exception as e:
-                # Ингода, ошибка вылазит из лишней запятой в конце.
-                # С помощью следующей функции попробуем сократить последствия данной ошибки
-                casting_prob = await extract_json_from_string(str(e))
+            # try:  # Проверяем наличие текста для самопроб
+            #     probe_chain = prob_prompt | model | prob_parser
+            #     casting_prob = await probe_chain.ainvoke({'input': casting_msg,
+            #                                               'format_instructions': prob_parser.get_format_instructions()})
+            # except Exception as e:
+            #     # Ингода, ошибка вылазит из лишней запятой в конце.
+            #     # С помощью следующей функции попробуем сократить последствия данной ошибки
+            #     casting_prob = await extract_json_from_string(str(e))
 
             casting_rights = None
             # Если это реклама, то извлечем информацию о правах
@@ -295,7 +295,7 @@ async def get_casting_data(casting_msg: str):
                     casting_rights = await extract_json_from_string(str(e))
 
             # Далее будем использовать обрезанную часть хэша
-            return casting_data, casting_config, casting_contacts, casting_rights, casting_prob, casting_hash[:10]
+            return casting_data, casting_config, casting_contacts, casting_rights, casting_hash[:10]
         else:
             return False
     else:

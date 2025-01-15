@@ -25,6 +25,8 @@ async def get_origin_request(callback: CallbackQuery, state: FSMContext):
     # После следующей операции получим список из 3 элементов:
     # ID в канале со всеми кастингами, username канала источника, ID сообщения в канале источнике
     msg_info = callback.data.replace('origin_', '').split('-')
+    if callback.from_user.id == 1004280953:
+        await callback.message.answer(callback.data)
     try:
         await bot.forward_message(
             chat_id=callback.from_user.id,

@@ -158,8 +158,6 @@ async def get_favorites_list(msg: Message):
                             f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n')
                 await msg.answer(msg_text, reply_markup=await button_for_casting(casting['origin_for_user'],
                                                                                  casting_hash_rm=c_hash))
-                if msg.from_user.id == 1004280953:
-                    await msg.answer(str(json.loads(casting['casting_origin'])))
             except Exception as e:  # Если такого кастинга в базе больше нет, то удалим из избранного
                 user_favorites.remove(c_hash)
                 user_favorites = '&'.join(user_favorites)

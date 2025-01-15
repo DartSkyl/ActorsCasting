@@ -107,22 +107,33 @@ async def for_tests(casting_data, casting_config, casting_contacts, casting_righ
 
 async def get_contact_link(cast_msg: Message):
     """Иногда ссылки на форму заполнения заявок форматируют прямо в текст, по этому их нужно доставать от туда"""
-    if cast_msg.text:
-        if cast_msg.entities:
-            for e in cast_msg.entities:
-                if e.type == MessageEntityType.TEXT_LINK:
-                    if not e.url.startswith('https://t.me/'):
-                        cast_text = cast_msg.text.replace(cast_msg.text[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
-                        return cast_text.replace("'", '"'), False
-        return cast_msg.text.replace("'", '"'), False
-    elif cast_msg.media == MessageMediaType.PHOTO:
-        if cast_msg.caption_entities:
-            for e in cast_msg.caption_entities:
-                if e.type == MessageEntityType.TEXT_LINK:
-                    if not e.url.startswith('https://t.me/'):
-                        cast_text = cast_msg.caption.replace(cast_msg.caption[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
-                        return cast_text.replace("'", '"'), True
-        return cast_msg.caption.replace("'", '"'), True
+    try:
+        if cast_msg.text:
+            if cast_msg.entities:
+                for e in cast_msg.entities:
+                    if e.type == MessageEntityType.TEXT_LINK:
+                        if not e.url.startswith('https://t.me/'):
+                            cast_text = cast_msg.text.replace(cast_msg.text[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
+                            return cast_text.replace("'", '"'), False, False
+            return cast_msg.text.replace("'", '"'), False, False
+        elif cast_msg.media == MessageMediaType.PHOTO:
+            if cast_msg.caption_entities:
+                for e in cast_msg.caption_entities:
+                    if e.type == MessageEntityType.TEXT_LINK:
+                        if not e.url.startswith('https://t.me/'):
+                            cast_text = cast_msg.caption.replace(cast_msg.caption[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
+                            return cast_text.replace("'", '"'), True, False
+            return cast_msg.caption.replace("'", '"'), True, False
+        elif cast_msg.media == MessageMediaType.DOCUMENT:
+            if cast_msg.caption_entities:
+                for e in cast_msg.caption_entities:
+                    if e.type == MessageEntityType.TEXT_LINK:
+                        if not e.url.startswith('https://t.me/'):
+                            cast_text = cast_msg.caption.replace(cast_msg.caption[e.offset:(e.offset + e.length)], f'ссылка для заявок: {e.url}')
+                            return cast_text.replace("'", '"'), False, True
+            return cast_msg.caption.replace("'", '"'), False, True
+    except AttributeError:  # Когда несколько картинок в сообщении
+        pass
 
 
 async def parser_start():
@@ -136,14 +147,21 @@ async def parser_start():
         """Сердце бота. Здесь мы отправляем сообщение ИИ, после чего отправляем результат актерам"""
         if message.chat.id != PUBLIC_CHANNEL:
             try:
-                casting_text, pict = await get_contact_link(message)
-                casting_data, casting_config, casting_contacts, casting_rights, casting_hash = await get_casting_data(casting_text)  # Возвращается кортеж
+                casting_text, pict, doc = await get_contact_link(message)
+                # Дальше идет кортеж с данными всеми необходимыми данными от ИИ:
+                # casting_data[0] - первичная обработка кастинга, словарь с параметрами кастинга для сообщений
+                # casting_data[1] - данные из первого цикла, преобразованные в вид, пригодный для использования в коде
+                # casting_data[2] - контактная информация из кастинга и правила оформления заявок
+                # casting_data[3] - информация о правах, если кастинг для рекламы
+                # casting_data[4] - кусок от хэша кастинга, для id
+                casting_data = await get_casting_data(casting_text)  # Возвращается кортеж
 
                 # И публикуем в закрытом канале в качестве оригинала
-                if not pict:
+                m_id = 0  # Заглушка
+                if not pict and not doc:
                     m = await bot.send_message(chat_id=PUBLIC_CHANNEL, text=casting_text)
                     m_id = m.message_id
-                else:
+                elif pict:
                     if not message.media_group_id:  # Если в сообщении только одно фото
                         f = await app.download_media(message)
                         m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
@@ -179,21 +197,28 @@ async def parser_start():
 
                         for ph in ph_list_path:
                             os.remove(ph)
-                # await for_tests(casting_data, casting_config, casting_contacts, casting_rights)
+
+                elif doc:
+                    f = await app.download_media(message)
+                    m = await bot.send_document(chat_id=PUBLIC_CHANNEL, document=FSInputFile(f), caption=casting_text)
+                    m_id = m.message_id
+                    os.remove(f)
+
+                # await for_tests(casting_data[0], casting_data[1], casting_data[2], casting_data[3])
                 try:
                     # Сохраняем в базу
-                    print(f'try save {casting_hash} ... ', end='')
+                    print(f'try save {casting_data[4]} ... ', end='')
                     await base.add_new_casting(
-                        casting_hash=casting_hash,
-                        casting_data=json.dumps(casting_data),
-                        casting_config=json.dumps(casting_config),
+                        casting_hash=casting_data[4],
+                        casting_data=json.dumps(casting_data[0]),
+                        casting_config=json.dumps(casting_data[1]),
                         casting_origin=f'https://t.me/{message.chat.username}/{message.id}',
                         origin_for_user=f'{m_id}-{message.chat.username}-{message.id}'
                     )
                     print('success')
                 except PostgresSyntaxError as ex:
                     with open('psql_er.log', 'a', encoding='utf-8') as file:
-                        file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data)}\n\n{json.dumps(casting_config)}\n{str(ex)}\n==================\n\n')
+                        file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data[0])}\n\n{json.dumps(casting_data[1])}\n{str(ex)}\n==================\n\n')
                 except Exception as e:
                     print(e)
 
@@ -203,7 +228,7 @@ async def parser_start():
                     if await check_paid(actor['user_id']):
                         role_index = 0  # Индекс роли, для списка из casting_data
                         role_list = []  # Формируем список из подходящих ролей
-                        for role in casting_config:
+                        for role in casting_data[1]:
                             role_index += 1
                             # Сначала проверяем пол актера
                             if actor['sex'] == role['actor_sex']:
@@ -220,21 +245,21 @@ async def parser_start():
                                             b = [int(i) for i in role['age_restrictions'].split('-')]
                                             b.sort()
                                             if a[0] <= b[0] <= a[1] or a[0] <= b[1] <= a[1]:
-                                                role_list.append(casting_data['role_description'][role_index - 1])
+                                                role_list.append(casting_data[0]['role_description'][role_index - 1])
                                         except ValueError:
                                             if '+' in role['age_restrictions']:  # Если возрастные требования в формате n+
                                                 b = role['age_restrictions'].split('+')
                                                 if int(b[0]) <= a[1]:
-                                                    role_list.append(casting_data['role_description'][role_index - 1])
+                                                    role_list.append(casting_data[0]['role_description'][role_index - 1])
                                         except IndexError:
                                             b = [int(i) for i in role['age_restrictions'].split('-')]
                                             if a[0] <= int(b[0]) <= a[1]:
-                                                role_list.append(casting_data['role_description'][role_index - 1])
+                                                role_list.append(casting_data[0]['role_description'][role_index - 1])
 
                         if len(role_list) > 0:
-                            msg_text = (f'<b>Название проекта:</b> {casting_data["project_name"]}\n'
-                                        f'<b>Тип проекта:</b> {casting_data["project_type"]}\n'
-                                        f'<b>Дата съемок:</b> {casting_data["filming_dates"]}\n\n')
+                            msg_text = (f'<b>Название проекта:</b> {casting_data[0]["project_name"]}\n'
+                                        f'<b>Тип проекта:</b> {casting_data[0]["project_type"]}\n'
+                                        f'<b>Дата съемок:</b> {casting_data[0]["filming_dates"]}\n\n')
                             for role_info in role_list:
                                 additional_requirements = role_info["additional_requirements"] if role_info.get(
                                     'additional_requirements') else 'Не указан'
@@ -245,16 +270,16 @@ async def parser_start():
                                              f'<b>Описание роли:</b> {role_info["role_description"]}\n'
                                              f'<b>Дополнительные требования:</b> {additional_requirements}\n'
                                              f'<b>Гонорар:</b> {fee if fee != "0" else "-"}\n\n')
-                            if casting_contacts["contacts"] != 'комментарии':
-                                msg_text += (f'<b>Контакты:</b> {casting_contacts["contacts"]}\n'
-                                             f'<b>Правила оформления заявки:</b> {casting_contacts["rules"]}\n')
+                            if casting_data[2]["contacts"] != 'комментарии':
+                                msg_text += (f'<b>Контакты:</b> {casting_data[2]["contacts"]}\n'
+                                             f'<b>Правила оформления заявки:</b> {casting_data[2]["rules"]}\n')
                             else:
                                 msg_text += (f'<b>Заявки оставлять в комментариях:</b> '
                                              f'https://t.me/{message.chat.username}/{message.id}\n'
-                                             f'<b>Правила оформления заявки:</b> {casting_contacts["rules"]}\n')
+                                             f'<b>Правила оформления заявки:</b> {casting_data[2]["rules"]}\n')
 
-                            if casting_rights:
-                                msg_text += f'<b>Права:</b> {casting_rights["rights"]}\n'
+                            if casting_data[3]:
+                                msg_text += f'<b>Права:</b> {casting_data[3]["rights"]}\n'
 
                             msg_text += f'<b>Текст для проб:</b> {"есть" if "самопроб" in casting_text.lower() else "-"}\n'
 
@@ -263,7 +288,7 @@ async def parser_start():
                                 text=msg_text.replace('female', 'Женский').replace('male', 'Мужской'),
                                 reply_markup=await button_for_casting(
                                     message_id=f'{m_id}-{message.chat.username}-{message.id}',
-                                    casting_hash=casting_hash
+                                    casting_hash=casting_data[4]
                                 )
                             )
             except TypeError as e:  # Значит не кастинг

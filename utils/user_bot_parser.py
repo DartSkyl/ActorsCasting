@@ -155,142 +155,142 @@ async def parser_start():
                 # casting_data[3] - информация о правах, если кастинг для рекламы
                 # casting_data[4] - кусок от хэша кастинга, для id
                 casting_data = await get_casting_data(casting_text)  # Возвращается кортеж
+                if casting_data:
+                    # И публикуем в закрытом канале в качестве оригинала
+                    m_id = 0  # Заглушка
+                    if not pict and not doc:
+                        m = await bot.send_message(chat_id=PUBLIC_CHANNEL, text=casting_text)
+                        m_id = m.message_id
+                    elif pict:
+                        if not message.media_group_id:  # Если в сообщении только одно фото
+                            f = await app.download_media(message)
+                            m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
+                            m_id = m.message_id
+                            os.remove(f)
+                        else:  # Если фото несколько
+                            # С каждой итерацией будем проверять на одно сообщение дальше,
+                            # пока не закончиться общий media_group_id
+                            next_msg_id = 0
+                            # И соберем их все в один список
+                            msg_photo_list = []
+                            while True:
+                                next_msg = await client.get_messages(chat_id=message.chat.id, message_ids=(message.id+next_msg_id))
+                                if next_msg.media_group_id == message.media_group_id:
+                                    msg_photo_list.append(next_msg)
+                                    next_msg_id += 1
+                                else:
+                                    break
 
-                # И публикуем в закрытом канале в качестве оригинала
-                m_id = 0  # Заглушка
-                if not pict and not doc:
-                    m = await bot.send_message(chat_id=PUBLIC_CHANNEL, text=casting_text)
-                    m_id = m.message_id
-                elif pict:
-                    if not message.media_group_id:  # Если в сообщении только одно фото
+                            # Теперь нужно сформировать годный к отправке список с фото
+                            media_group = MediaGroupBuilder(caption=casting_text)
+                            # И список с путями, что бы зачистить после себя
+                            ph_list_path = []
+                            for mess in msg_photo_list:
+                                ph = await app.download_media(mess)
+                                media_group.add(type='photo', media=FSInputFile(ph))
+                                ph_list_path.append(ph)
+
+                            m_list = await bot.send_media_group(chat_id=PUBLIC_CHANNEL, media=media_group.build())
+                            # Формируем строку со списком ID
+                            m_id = '&'.join([str(m.message_id) for m in m_list])
+                            # Зачищаем после загрузки
+
+                            for ph in ph_list_path:
+                                os.remove(ph)
+
+                    elif doc:
                         f = await app.download_media(message)
-                        m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
+                        m = await bot.send_document(chat_id=PUBLIC_CHANNEL, document=FSInputFile(f), caption=casting_text)
                         m_id = m.message_id
                         os.remove(f)
-                    else:  # Если фото несколько
-                        # С каждой итерацией будем проверять на одно сообщение дальше,
-                        # пока не закончиться общий media_group_id
-                        next_msg_id = 0
-                        # И соберем их все в один список
-                        msg_photo_list = []
-                        while True:
-                            next_msg = await client.get_messages(chat_id=message.chat.id, message_ids=(message.id+next_msg_id))
-                            if next_msg.media_group_id == message.media_group_id:
-                                msg_photo_list.append(next_msg)
-                                next_msg_id += 1
-                            else:
-                                break
 
-                        # Теперь нужно сформировать годный к отправке список с фото
-                        media_group = MediaGroupBuilder(caption=casting_text)
-                        # И список с путями, что бы зачистить после себя
-                        ph_list_path = []
-                        for mess in msg_photo_list:
-                            ph = await app.download_media(mess)
-                            media_group.add(type='photo', media=FSInputFile(ph))
-                            ph_list_path.append(ph)
+                    # await for_tests(casting_data[0], casting_data[1], casting_data[2], casting_data[3])
+                    try:
+                        # Сохраняем в базу
+                        print(f'try save {casting_data[4]} ... ', end='')
+                        await base.add_new_casting(
+                            casting_hash=casting_data[4],
+                            casting_data=json.dumps(casting_data[0]),
+                            casting_config=json.dumps(casting_data[1]),
+                            casting_origin=f'https://t.me/{message.chat.username}/{message.id}',
+                            origin_for_user=f'{m_id}-{message.chat.username}-{message.id}'
+                        )
+                        print('success')
+                    except PostgresSyntaxError as ex:
+                        with open('psql_er.log', 'a', encoding='utf-8') as file:
+                            file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data[0])}\n\n{json.dumps(casting_data[1])}\n{str(ex)}\n==================\n\n')
+                    except Exception as e:
+                        print(e)
 
-                        m_list = await bot.send_media_group(chat_id=PUBLIC_CHANNEL, media=media_group.build())
-                        # Формируем строку со списком ID
-                        m_id = '&'.join([str(m.message_id) for m in m_list])
-                        # Зачищаем после загрузки
-
-                        for ph in ph_list_path:
-                            os.remove(ph)
-
-                elif doc:
-                    f = await app.download_media(message)
-                    m = await bot.send_document(chat_id=PUBLIC_CHANNEL, document=FSInputFile(f), caption=casting_text)
-                    m_id = m.message_id
-                    os.remove(f)
-
-                # await for_tests(casting_data[0], casting_data[1], casting_data[2], casting_data[3])
-                try:
-                    # Сохраняем в базу
-                    print(f'try save {casting_data[4]} ... ', end='')
-                    await base.add_new_casting(
-                        casting_hash=casting_data[4],
-                        casting_data=json.dumps(casting_data[0]),
-                        casting_config=json.dumps(casting_data[1]),
-                        casting_origin=f'https://t.me/{message.chat.username}/{message.id}',
-                        origin_for_user=f'{m_id}-{message.chat.username}-{message.id}'
-                    )
-                    print('success')
-                except PostgresSyntaxError as ex:
-                    with open('psql_er.log', 'a', encoding='utf-8') as file:
-                        file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data[0])}\n\n{json.dumps(casting_data[1])}\n{str(ex)}\n==================\n\n')
-                except Exception as e:
-                    print(e)
-
-                # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
-                all_actors = await base.get_all_actors()
-                for actor in all_actors:
-                    if await check_paid(actor['user_id']):
-                        role_index = 0  # Индекс роли, для списка из casting_data
-                        role_list = []  # Формируем список из подходящих ролей
-                        for role in casting_data[1]:
-                            role_index += 1
-                            # Сначала проверяем пол актера
-                            if actor['sex'] == role['actor_sex']:
-                                # Проверяем, подходит ли проект актеру
-                                if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
-                                    # Проверяем, подходит гонорар
-                                    if (actor['fee'] <= role['fee']) or role['fee'] == 0 or ('free' in actor['projects_interest'].split('+') and role['project_type'] == 'free'):
-                                        # Проверяем возраст актера
-                                        # Игровой диапазон актера
-                                        a = [int(i) for i in actor['playing_age'].split('-')]
-                                        a.sort()
-                                        try:
-                                            # Возрастной диапазон для роли
-                                            b = [int(i) for i in role['age_restrictions'].split('-')]
-                                            b.sort()
-                                            if a[0] <= b[0] <= a[1] or a[0] <= b[1] <= a[1]:
-                                                role_list.append(casting_data[0]['role_description'][role_index - 1])
-                                        except ValueError:
-                                            if '+' in role['age_restrictions']:  # Если возрастные требования в формате n+
-                                                b = role['age_restrictions'].split('+')
-                                                if int(b[0]) <= a[1]:
+                    # Если пришел новый кастинг, то достаем всех актеров и начинаем проверять подходит он им или нет
+                    all_actors = await base.get_all_actors()
+                    for actor in all_actors:
+                        if await check_paid(actor['user_id']):
+                            role_index = 0  # Индекс роли, для списка из casting_data
+                            role_list = []  # Формируем список из подходящих ролей
+                            for role in casting_data[1]:
+                                role_index += 1
+                                # Сначала проверяем пол актера
+                                if actor['sex'] == role['actor_sex']:
+                                    # Проверяем, подходит ли проект актеру
+                                    if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
+                                        # Проверяем, подходит гонорар
+                                        if (actor['fee'] <= role['fee']) or role['fee'] == 0 or ('free' in actor['projects_interest'].split('+') and role['project_type'] == 'free'):
+                                            # Проверяем возраст актера
+                                            # Игровой диапазон актера
+                                            a = [int(i) for i in actor['playing_age'].split('-')]
+                                            a.sort()
+                                            try:
+                                                # Возрастной диапазон для роли
+                                                b = [int(i) for i in role['age_restrictions'].split('-')]
+                                                b.sort()
+                                                if a[0] <= b[0] <= a[1] or a[0] <= b[1] <= a[1]:
                                                     role_list.append(casting_data[0]['role_description'][role_index - 1])
-                                        except IndexError:
-                                            b = [int(i) for i in role['age_restrictions'].split('-')]
-                                            if a[0] <= int(b[0]) <= a[1]:
-                                                role_list.append(casting_data[0]['role_description'][role_index - 1])
+                                            except ValueError:
+                                                if '+' in role['age_restrictions']:  # Если возрастные требования в формате n+
+                                                    b = role['age_restrictions'].split('+')
+                                                    if int(b[0]) <= a[1]:
+                                                        role_list.append(casting_data[0]['role_description'][role_index - 1])
+                                            except IndexError:
+                                                b = [int(i) for i in role['age_restrictions'].split('-')]
+                                                if a[0] <= int(b[0]) <= a[1]:
+                                                    role_list.append(casting_data[0]['role_description'][role_index - 1])
 
-                        if len(role_list) > 0:
-                            msg_text = (f'<b>Название проекта:</b> {casting_data[0]["project_name"]}\n'
-                                        f'<b>Тип проекта:</b> {casting_data[0]["project_type"]}\n'
-                                        f'<b>Дата съемок:</b> {casting_data[0]["filming_dates"]}\n\n')
-                            for role_info in role_list:
-                                additional_requirements = role_info["additional_requirements"] if role_info.get(
-                                    'additional_requirements') else 'Не указан'
-                                fee = role_info["fee"] if role_info.get('fee') else 'Не указан'
-                                msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
-                                             f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
-                                             f'<b>Название роли:</b> {role_info["role_name"]}\n'
-                                             f'<b>Описание роли:</b> {role_info["role_description"]}\n'
-                                             f'<b>Дополнительные требования:</b> {additional_requirements}\n'
-                                             f'<b>Гонорар:</b> {fee if fee != "0" else "-"}\n\n')
-                            if casting_data[2]["contacts"] != 'комментарии':
-                                msg_text += (f'<b>Контакты:</b> {casting_data[2]["contacts"]}\n'
-                                             f'<b>Правила оформления заявки:</b> {casting_data[2]["rules"]}\n')
-                            else:
-                                msg_text += (f'<b>Заявки оставлять в комментариях:</b> '
-                                             f'https://t.me/{message.chat.username}/{message.id}\n'
-                                             f'<b>Правила оформления заявки:</b> {casting_data[2]["rules"]}\n')
+                            if len(role_list) > 0:
+                                msg_text = (f'<b>Название проекта:</b> {casting_data[0]["project_name"]}\n'
+                                            f'<b>Тип проекта:</b> {casting_data[0]["project_type"]}\n'
+                                            f'<b>Дата съемок:</b> {casting_data[0]["filming_dates"]}\n\n')
+                                for role_info in role_list:
+                                    additional_requirements = role_info["additional_requirements"] if role_info.get(
+                                        'additional_requirements') else 'Не указан'
+                                    fee = role_info["fee"] if role_info.get('fee') else 'Не указан'
+                                    msg_text += (f'<b>Пол актера:</b> {role_info["actor_sex"]}\n'
+                                                 f'<b>Возраст актера:</b> {role_info["age_restrictions"]}\n'
+                                                 f'<b>Название роли:</b> {role_info["role_name"]}\n'
+                                                 f'<b>Описание роли:</b> {role_info["role_description"]}\n'
+                                                 f'<b>Дополнительные требования:</b> {additional_requirements}\n'
+                                                 f'<b>Гонорар:</b> {fee if fee != "0" else "-"}\n\n')
+                                if casting_data[2]["contacts"] != 'комментарии':
+                                    msg_text += (f'<b>Контакты:</b> {casting_data[2]["contacts"]}\n'
+                                                 f'<b>Правила оформления заявки:</b> {casting_data[2]["rules"]}\n')
+                                else:
+                                    msg_text += (f'<b>Заявки оставлять в комментариях:</b> '
+                                                 f'https://t.me/{message.chat.username}/{message.id}\n'
+                                                 f'<b>Правила оформления заявки:</b> {casting_data[2]["rules"]}\n')
 
-                            if casting_data[3]:
-                                msg_text += f'<b>Права:</b> {casting_data[3]["rights"]}\n'
+                                if casting_data[3]:
+                                    msg_text += f'<b>Права:</b> {casting_data[3]["rights"]}\n'
 
-                            msg_text += f'<b>Текст для проб:</b> {"есть" if "самопроб" in casting_text.lower() else "-"}\n'
+                                msg_text += f'<b>Текст для проб:</b> {"есть" if "самопроб" in casting_text.lower() else "-"}\n'
 
-                            await bot.send_message(
-                                chat_id=actor['user_id'],
-                                text=msg_text.replace('female', 'Женский').replace('male', 'Мужской'),
-                                reply_markup=await button_for_casting(
-                                    message_id=f'{m_id}-{message.chat.username}-{message.id}',
-                                    casting_hash=casting_data[4]
+                                await bot.send_message(
+                                    chat_id=actor['user_id'],
+                                    text=msg_text.replace('female', 'Женский').replace('male', 'Мужской'),
+                                    reply_markup=await button_for_casting(
+                                        message_id=f'{m_id}-{message.chat.username}-{message.id}',
+                                        casting_hash=casting_data[4]
+                                    )
                                 )
-                            )
             except TypeError as e:  # Значит не кастинг
                 pass
             except UniqueViolationError as e:  # Проскачил уже имеющийся в базе

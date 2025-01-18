@@ -231,7 +231,7 @@ async def parser_start():
                             for role in casting_data[1]:
                                 role_index += 1
                                 # Сначала проверяем пол актера
-                                if actor['sex'] == role['actor_sex']:
+                                if actor['sex'] == role['actor_sex'] or role['actor_sex'].lower() == 'unspecified':
                                     # Проверяем, подходит ли проект актеру
                                     if role['project_type'] in actor['projects_interest'].split('+') or role['project_type'] == 'Unspecified':
                                         # Проверяем, подходит гонорар
@@ -242,9 +242,12 @@ async def parser_start():
                                             a.sort()
                                             try:
                                                 # Возрастной диапазон для роли
-                                                b = [int(i) for i in role['age_restrictions'].split('-')]
-                                                b.sort()
-                                                if a[0] <= b[0] <= a[1] or a[0] <= b[1] <= a[1]:
+                                                if role['age_restrictions'].lower() != 'unspecified':
+                                                    b = [int(i) for i in role['age_restrictions'].split('-')]
+                                                    b.sort()
+                                                    if a[0] <= b[0] <= a[1] or a[0] <= b[1] <= a[1]:
+                                                        role_list.append(casting_data[0]['role_description'][role_index - 1])
+                                                else:  # Если возраст не указан
                                                     role_list.append(casting_data[0]['role_description'][role_index - 1])
                                             except ValueError:
                                                 if '+' in role['age_restrictions']:  # Если возрастные требования в формате n+

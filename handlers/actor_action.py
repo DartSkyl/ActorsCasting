@@ -161,8 +161,8 @@ async def get_favorites_list(msg: Message):
             except Exception as e:  # Если такого кастинга в базе больше нет, то удалим из избранного
                 if msg.from_user.id == 1004280953:
                     await msg.answer(str(e))
-                user_favorites.remove(c_hash)
-                user_favorites = '&'.join(user_favorites)
+                # user_favorites.remove(c_hash)
+                # user_favorites = '&'.join(user_favorites)
                 await base.set_actor_favorites(msg.from_user.id, user_favorites)
                 await msg.answer('Кастинг был удален администрацией!')
 

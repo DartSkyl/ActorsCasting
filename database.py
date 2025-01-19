@@ -139,6 +139,7 @@ class BotBase:
         async with self.pool.acquire() as connection:
             result = await connection.fetch(f"SELECT * "
                                             f"FROM public.all_castings WHERE casting_hash = '{casting_hash}'")
+            print(result)
             return result
 
     async def get_statistic_data(self, first_date: str, second_date: str):

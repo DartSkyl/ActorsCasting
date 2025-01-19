@@ -150,6 +150,8 @@ async def get_favorites_list(msg: Message):
     if len(user_favorites) > 0 and user_favorites != ['']:
         for c_hash in user_favorites:
             try:
+                if msg.from_user.id == 1004280953:
+                    await msg.answer(str(c_hash))
                 casting = (await base.get_casting(c_hash))[0]
                 casting_data = json.loads(casting['casting_data'])
                 msg_text = (f'<i>Сохраненный кастинг</i>\n\n'

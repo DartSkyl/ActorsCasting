@@ -247,7 +247,7 @@ async def get_check_result(msg: Message, state: FSMContext):
     last_200_castings = await base.get_all_texts_2()
     for t in last_200_castings:
         first = set(t['casting_text'].split())
-        second = set(msg.split())
+        second = set(msg.text.split())
         uniq = await jaccard(first, second)
         if uniq > 0.8:
             await msg.answer('Данный текст (или на 80% такой же) есть в базе')

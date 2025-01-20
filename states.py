@@ -60,7 +60,7 @@ class AdminStates(StatesGroup):
     delete_user = State()
     newsletter = State()
 
-    second_text = State()
+    casting_text = State()
 
     sub_add = State()
     sub_del = State()

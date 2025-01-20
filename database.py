@@ -139,7 +139,6 @@ class BotBase:
         async with self.pool.acquire() as connection:
             result = await connection.fetch(f"SELECT * "
                                             f"FROM public.all_castings WHERE casting_hash = '{casting_hash}'")
-            print(result)
             return result
 
     async def get_statistic_data(self, first_date: str, second_date: str):
@@ -179,6 +178,11 @@ class BotBase:
     async def get_all_texts(self):
         async with self.pool.acquire() as connection:
             result = await connection.fetch(f"SELECT casting_text FROM public.all_castings_texts ORDER BY id DESC LIMIT 200;")
+            return result
+
+    async def get_all_texts_2(self):
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT casting_text FROM public.all_castings_texts;")
             return result
 
     # ====================

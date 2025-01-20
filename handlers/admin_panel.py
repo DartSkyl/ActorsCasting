@@ -228,6 +228,35 @@ async def show_user(msg: Message, state: FSMContext):
 # ====================
 
 
+@admin_router.message(Command('check'))
+async def check_casting_text(msg: Message, state: FSMContext):
+    """Есть ли данный каст в базе или нет"""
+    await state.set_state(AdminStates.casting_text)
+    await msg.answer('Введите текст кастинга:')
+
+
+@admin_router.message(AdminStates.casting_text)
+async def get_check_result(msg: Message, state: FSMContext):
+    await state.clear()
+
+    async def jaccard(x: set, y: set):
+        shared = x.intersection(y)  # выбираем пересекающиеся токены
+        return len(shared) / len(x.union(y))
+
+    #  Получаем последние 200 текстов
+    last_200_castings = await base.get_all_texts_2()
+    for t in last_200_castings:
+        first = set(t['casting_text'].split())
+        second = set(msg.split())
+        uniq = await jaccard(first, second)
+        if uniq > 0.8:
+            await msg.answer('Данный текст (или на 80% такой же) есть в базе')
+            return True
+    await msg.answer('Такого текста нет')
+    return False
+
+
+
 @admin_router.message(F.text == 'База данных кастингов')
 async def open_casting_bd_menu(msg: Message, state: FSMContext):
     """Открываем меню выбора отчетного периода БД с кастингами"""

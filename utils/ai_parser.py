@@ -226,7 +226,7 @@ async def get_casting_data(casting_msg: str):
     # print(check_response)
     check_response = check_response['it_casting'] if 'it_casting' in check_response\
         else check_response['properties']['it_casting']
-    print(check_response)
+    # print(check_response)
     # print('=======')
     if check_response and await check_words(casting_msg):
 
@@ -281,15 +281,6 @@ async def get_casting_data(casting_msg: str):
                 # Ингода, ошибка вылазит из лишней запятой в конце.
                 # С помощью следующей функции попробуем сократить последствия данной ошибки
                 casting_contacts = await extract_json_from_string(str(e))
-
-            # try:  # Проверяем наличие текста для самопроб
-            #     probe_chain = prob_prompt | model | prob_parser
-            #     casting_prob = await probe_chain.ainvoke({'input': casting_msg,
-            #                                               'format_instructions': prob_parser.get_format_instructions()})
-            # except Exception as e:
-            #     # Ингода, ошибка вылазит из лишней запятой в конце.
-            #     # С помощью следующей функции попробуем сократить последствия данной ошибки
-            #     casting_prob = await extract_json_from_string(str(e))
 
             casting_rights = None
             # Если это реклама, то извлечем информацию о правах

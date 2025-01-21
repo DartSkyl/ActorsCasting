@@ -256,6 +256,18 @@ async def get_check_result(msg: Message, state: FSMContext):
     return False
 
 
+@admin_router.message(Command('add'))
+async def add_text_in_bd(msg: Message, state: FSMContext):
+    await state.set_state(AdminStates.add_text)
+    await msg.answer('Введите текст кастинга:')
+
+
+@admin_router.message(AdminStates.add_text)
+async def add_text(msg: Message, state: FSMContext):
+    await state.clear()
+    await base.add_new_text(msg.text)
+    await msg.answer('Текст добавлен')
+
 
 @admin_router.message(F.text == 'База данных кастингов')
 async def open_casting_bd_menu(msg: Message, state: FSMContext):

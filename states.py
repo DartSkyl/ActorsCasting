@@ -61,6 +61,7 @@ class AdminStates(StatesGroup):
     newsletter = State()
 
     casting_text = State()
+    add_text = State()
 
     sub_add = State()
     sub_del = State()

@@ -225,7 +225,7 @@ async def get_casting_data(casting_msg: str):
     # print(check_response)
     check_response = check_response['it_casting'] if 'it_casting' in check_response\
         else check_response['properties']['it_casting']
-    print(check_response)
+    # print(check_response)
     # print('=======')
     if check_response and await check_words(casting_msg):
 

@@ -148,7 +148,8 @@ check_prompt_text = """Твоя задача определить содержи
 check_prompt_text_ = """Ты помощник актера по поиску новых ролей. Твоя задача определить содержит ли сообщение
 описание кастинга на какую-нибудь роль или нет. Если сообщение содержит слово "кастинг" в качестве простого 
 упоминания "о каком то там кастинге" и не содержит фактической информации и ролях и проекте, для которого проводят 
-кастинг, то игнорируй это сообщение. Так же, игнорируй сообщения, в которых предлагаются какие либо услуги.
+кастинг, то игнорируй это сообщение. Так же, игнорируй сообщения, в которых предлагаются какие либо услуги. Игнорируй
+и те сообщения, из которых не понятно кого предстоит сыграть.
 Отвечай в формате JSON, строго так, как описано в подсказке по форматированию {format_instructions}.
 Текст сообщения: {input}"""
 check_prompt = PromptTemplate.from_template(check_prompt_text_)
@@ -225,7 +226,7 @@ async def get_casting_data(casting_msg: str):
     # print(check_response)
     check_response = check_response['it_casting'] if 'it_casting' in check_response\
         else check_response['properties']['it_casting']
-    # print(check_response)
+    print(check_response)
     # print('=======')
     if check_response and await check_words(casting_msg):
 

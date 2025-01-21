@@ -10,6 +10,7 @@ from pyrogram import filters
 from aiogram.types.chat_member_left import ChatMemberLeft
 from aiogram.types import FSInputFile
 from aiogram.utils.media_group import MediaGroupBuilder
+from aiogram.exceptions import TelegramBadRequest
 
 from asyncpg.exceptions import UniqueViolationError, PostgresSyntaxError
 
@@ -162,41 +163,45 @@ async def parser_start():
                         m = await bot.send_message(chat_id=PUBLIC_CHANNEL, text=casting_text)
                         m_id = m.message_id
                     elif pict:
-                        if not message.media_group_id:  # Если в сообщении только одно фото
-                            f = await app.download_media(message)
-                            m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
+                        try:
+                            if not message.media_group_id:  # Если в сообщении только одно фото
+                                f = await app.download_media(message)
+                                m = await bot.send_photo(chat_id=PUBLIC_CHANNEL, photo=FSInputFile(f), caption=casting_text)
+                                m_id = m.message_id
+                                os.remove(f)
+                            else:  # Если фото несколько
+                                # С каждой итерацией будем проверять на одно сообщение дальше,
+                                # пока не закончиться общий media_group_id
+                                next_msg_id = 0
+                                # И соберем их все в один список
+                                msg_photo_list = []
+                                while True:
+                                    next_msg = await client.get_messages(chat_id=message.chat.id, message_ids=(message.id+next_msg_id))
+                                    if next_msg.media_group_id == message.media_group_id:
+                                        msg_photo_list.append(next_msg)
+                                        next_msg_id += 1
+                                    else:
+                                        break
+
+                                # Теперь нужно сформировать годный к отправке список с фото
+                                media_group = MediaGroupBuilder(caption=casting_text)
+                                # И список с путями, что бы зачистить после себя
+                                ph_list_path = []
+                                for mess in msg_photo_list:
+                                    ph = await app.download_media(mess)
+                                    media_group.add(type='photo', media=FSInputFile(ph))
+                                    ph_list_path.append(ph)
+
+                                m_list = await bot.send_media_group(chat_id=PUBLIC_CHANNEL, media=media_group.build())
+                                # Формируем строку со списком ID
+                                m_id = '&'.join([str(m.message_id) for m in m_list])
+                                # Зачищаем после загрузки
+
+                                for ph in ph_list_path:
+                                    os.remove(ph)
+                        except TelegramBadRequest:  # Если описание слишком большое
+                            m = await bot.send_message(chat_id=PUBLIC_CHANNEL, text=casting_text)
                             m_id = m.message_id
-                            os.remove(f)
-                        else:  # Если фото несколько
-                            # С каждой итерацией будем проверять на одно сообщение дальше,
-                            # пока не закончиться общий media_group_id
-                            next_msg_id = 0
-                            # И соберем их все в один список
-                            msg_photo_list = []
-                            while True:
-                                next_msg = await client.get_messages(chat_id=message.chat.id, message_ids=(message.id+next_msg_id))
-                                if next_msg.media_group_id == message.media_group_id:
-                                    msg_photo_list.append(next_msg)
-                                    next_msg_id += 1
-                                else:
-                                    break
-
-                            # Теперь нужно сформировать годный к отправке список с фото
-                            media_group = MediaGroupBuilder(caption=casting_text)
-                            # И список с путями, что бы зачистить после себя
-                            ph_list_path = []
-                            for mess in msg_photo_list:
-                                ph = await app.download_media(mess)
-                                media_group.add(type='photo', media=FSInputFile(ph))
-                                ph_list_path.append(ph)
-
-                            m_list = await bot.send_media_group(chat_id=PUBLIC_CHANNEL, media=media_group.build())
-                            # Формируем строку со списком ID
-                            m_id = '&'.join([str(m.message_id) for m in m_list])
-                            # Зачищаем после загрузки
-
-                            for ph in ph_list_path:
-                                os.remove(ph)
 
                     elif doc:
                         f = await app.download_media(message)
@@ -298,8 +303,8 @@ async def parser_start():
                 pass
             except UniqueViolationError as e:  # Проскачил уже имеющийся в базе
                 pass
-            except Exception as e:
-                print(e)
+            # except Exception as e:
+            #     print(e)
 
 
 async def parser_stop():

@@ -10,7 +10,7 @@ from pyrogram import filters
 from aiogram.types.chat_member_left import ChatMemberLeft
 from aiogram.types import FSInputFile
 from aiogram.utils.media_group import MediaGroupBuilder
-from aiogram.exceptions import TelegramBadRequest
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 
 from asyncpg.exceptions import UniqueViolationError, PostgresSyntaxError
 
@@ -290,15 +290,17 @@ async def parser_start():
                                     msg_text += f'<b>Права:</b> {casting_data[3]["rights"]}\n'
 
                                 msg_text += f'<b>Текст для проб:</b> {"есть" if "самопроб" in casting_text.lower() else "-"}\n'
-
-                                await bot.send_message(
-                                    chat_id=actor['user_id'],
-                                    text=msg_text.replace('female', 'Женский').replace('male', 'Мужской'),
-                                    reply_markup=await button_for_casting(
-                                        message_id=f'{m_id}-{message.chat.username}-{message.id}',
-                                        casting_hash=casting_data[4]
+                                try:
+                                    await bot.send_message(
+                                        chat_id=actor['user_id'],
+                                        text=msg_text.replace('female', 'Женский').replace('male', 'Мужской'),
+                                        reply_markup=await button_for_casting(
+                                            message_id=f'{m_id}-{message.chat.username}-{message.id}',
+                                            casting_hash=casting_data[4]
+                                        )
                                     )
-                                )
+                                except TelegramForbiddenError:
+                                    pass
             except TypeError as e:  # Значит не кастинг
                 pass
             except UniqueViolationError as e:  # Проскачил уже имеющийся в базе

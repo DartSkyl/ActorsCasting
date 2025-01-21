@@ -71,7 +71,9 @@ async def check_paid(user_id):
     канал. Т.е. если подписчик в этом канале есть, значит подписка оплачена и наоборот. Так что будем проверять наличие
     пользователя в группе на предмет оплаченной подписки. Если вы ничего не поняли, у меня для вас плохие новости"""
     is_paid = await bot.get_chat_member(chat_id=CONTROL_GROUP, user_id=user_id)
-    if not isinstance(is_paid, ChatMemberLeft) or user_id == 1004280953 or user_id in await base.get_all_sub():
+    black_list = [404045019, 5976606004]
+    if ((not isinstance(is_paid, ChatMemberLeft) or user_id == 1004280953 or user_id in await base.get_all_sub())
+            and (user_id not in black_list)):
         return True
     return False
 

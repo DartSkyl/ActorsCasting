@@ -229,7 +229,7 @@ async def get_casting_data(casting_msg: str):
         else check_response['properties']['it_casting']
     # print(check_response)
     # print('=======')
-    if check_response and await check_words(casting_msg):
+    if check_response and await check_words(casting_msg) and len(casting_msg) > 300:
 
         # А это для создания ID
         str_for_hashing = casting_msg[:100].encode()

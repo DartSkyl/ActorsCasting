@@ -307,6 +307,14 @@ async def parser_start():
                 pass
             except UniqueViolationError as e:  # Проскачил уже имеющийся в базе
                 pass
+            except ValueError as e:  # Паронармальщина
+                with open('paranorm.log', 'a', encoding='utf-8') as file:
+                    file.write(
+                        f'\n=========ValueError=========\n{casting_text}\n==================\n\n')  # noqa
+            except IndexError as e:  # Паронармальщина
+                with open('paranorm.log', 'a', encoding='utf-8') as file:
+                    file.write(
+                        f'\n=========IndexError=========\n{casting_text}\n==================\n\n')  # noqa
             # except Exception as e:
             #     print(e)
 

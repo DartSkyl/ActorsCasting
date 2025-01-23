@@ -211,7 +211,7 @@ async def parser_start():
                         m_id = m.message_id
                         os.remove(f)
 
-                    await for_tests(casting_data[0], casting_data[1], casting_data[2], casting_data[3])
+                    # await for_tests(casting_data[0], casting_data[1], casting_data[2], casting_data[3])
                     try:
                         # Сохраняем в базу
                         print(f'try save {casting_data[4]} ... ', end='')

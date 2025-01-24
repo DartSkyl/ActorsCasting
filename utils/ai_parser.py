@@ -1,5 +1,6 @@
 import hashlib
 import json
+import datetime
 
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
@@ -302,5 +303,5 @@ async def get_casting_data(casting_msg: str):
     else:
         with open('drop.log', 'a', encoding='utf-8') as file:
             file.write(
-                f'\n==================\n{casting_msg}\n==================\n\n')
+                f'\n=================={str(datetime.datetime.now())}\n{casting_msg}\n==================\n\n')
         return False

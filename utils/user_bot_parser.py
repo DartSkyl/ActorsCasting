@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 from pydantic_core._pydantic_core import ValidationError
 from pyrogram import Client
 from pyrogram.types import Message
@@ -223,9 +224,8 @@ async def parser_start():
                             origin_for_user=f'{m_id}-{message.chat.username}-{message.id}'
                         )
                         print('success')
-                    except PostgresSyntaxError as ex:
-                        with open('psql_er.log', 'a', encoding='utf-8') as file:
-                            file.write(f'\n==================\n{casting_text}\n\n{json.dumps(casting_data[0])}\n\n{json.dumps(casting_data[1])}\n{str(ex)}\n==================\n\n')
+                    except PostgresSyntaxError:
+                        pass
                     except Exception as e:
                         print(e)
 
@@ -304,17 +304,20 @@ async def parser_start():
                                 except TelegramForbiddenError:
                                     pass
             except TypeError as e:  # Значит не кастинг
+                with open('paranorm.log', 'a', encoding='utf-8') as file:
+                    file.write(
+                        f'\n=========TypeError========={str(datetime.datetime.now())}\n{casting_text}\n==================\n\n')  # noqa
                 pass
             except UniqueViolationError as e:  # Проскачил уже имеющийся в базе
                 pass
             except ValueError as e:  # Паронармальщина
                 with open('paranorm.log', 'a', encoding='utf-8') as file:
                     file.write(
-                        f'\n=========ValueError=========\n{casting_text}\n==================\n\n')  # noqa
+                        f'\n=========ValueError========={str(datetime.datetime.now())}\n{casting_text}\n==================\n\n')  # noqa
             except IndexError as e:  # Паронармальщина
                 with open('paranorm.log', 'a', encoding='utf-8') as file:
                     file.write(
-                        f'\n=========IndexError=========\n{casting_text}\n==================\n\n')  # noqa
+                        f'\n=========IndexError========={str(datetime.datetime.now())}\n{casting_text}\n==================\n\n')  # noqa
             # except Exception as e:
             #     print(e)
 

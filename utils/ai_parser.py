@@ -232,7 +232,7 @@ async def get_casting_data(casting_msg: str):
     if check_response and await check_words(casting_msg) and len(casting_msg) > 150:
 
         # А это для создания ID
-        str_for_hashing = casting_msg[:100].encode()
+        str_for_hashing = casting_msg.encode()
         casting_hash = hashlib.sha256(str_for_hashing).hexdigest()
         if await uniqueness_check(casting_msg):  # Для учета уникальности кастингов будем использовать индекс Жаккара
             await base.add_new_text(casting_msg)

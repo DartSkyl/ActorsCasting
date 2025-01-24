@@ -150,6 +150,7 @@ async def parser_start():
     async def my_handler(client: Client, message: Message):
         """Сердце бота. Здесь мы отправляем сообщение ИИ, после чего отправляем результат актерам"""
         if message.chat.id != PUBLIC_CHANNEL:
+            casting_text = 'Заглушка'
             try:
                 casting_text, pict, doc = await get_contact_link(message)
                 # Дальше идет кортеж с данными всеми необходимыми данными от ИИ:
